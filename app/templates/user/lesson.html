@@ -17,9 +17,16 @@
                     <h1 class="card-title">{{ lesson.title }}</h1>
                     <p class="text-muted">Lesson {{ lesson.order }} of {{ course.title }}</p>
                 </div>
+                <div class="lesson-status">
+                    {% if lesson_progress and lesson_progress.status == 'completed' %}
+                    <span class="badge bg-success fs-6"><i class="fas fa-check-circle me-1"></i> Completed</span>
+                    {% elif lesson_progress and lesson_progress.status == 'in_progress' %}
+                    <span class="badge bg-warning text-dark fs-6"><i class="fas fa-clock me-1"></i> In Progress</span>
+                    {% else %}
+                    <span class="badge bg-secondary fs-6"><i class="fas fa-circle me-1"></i> Not Started</span>
+                    {% endif %}
+                </div>
             </div>
-            
-            
             
             <hr>
             
@@ -83,6 +90,28 @@
         </div>
     </div>
     
+    <div class="card mb-4">
+        <div class="card-body text-center">
+            <h5 class="mb-3">Lesson Progress</h5>
+            {% if lesson_progress and lesson_progress.status == 'completed' %}
+            <div class="alert alert-success mb-3">
+                <i class="fas fa-check-circle me-2"></i> You have completed this lesson!
+                {% if lesson_progress.completed_at %}
+                <br><small>Completed on {{ lesson_progress.completed_at.strftime('%d %b, %Y at %H:%M') }}</small>
+                {% endif %}
+            </div>
+            <button id="markIncompleteBtn" class="btn btn-outline-secondary" onclick="markLessonIncomplete({{ lesson.id }})">
+                <i class="fas fa-undo me-1"></i> Mark as Incomplete
+            </button>
+            {% else %}
+            <p class="text-muted mb-3">Click the button below when you've finished reviewing this lesson.</p>
+            <button id="markCompleteBtn" class="btn btn-success btn-lg" onclick="markLessonComplete({{ lesson.id }})">
+                <i class="fas fa-check-circle me-2"></i> Mark as Complete
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    
     <div class="row">
         <div class="col-md-6 text-left">
             {% if prev_lesson %}
@@ -110,20 +139,83 @@
 <!-- JavaScript for Interactive Features -->
 <script>
 function showSuccessMessage(message) {
-    // Create a simple success alert
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-success alert-dismissible fade show';
-    alert.innerHTML = `
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+    alertDiv.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     
-    document.querySelector('.section').insertBefore(alert, document.querySelector('.section').firstChild);
+    document.querySelector('.section').insertBefore(alertDiv, document.querySelector('.section').firstChild);
     
-    // Auto-dismiss after 3 seconds
     setTimeout(() => {
-        alert.remove();
+        alertDiv.remove();
     }, 3000);
+}
+
+function markLessonComplete(lessonId) {
+    const btn = document.getElementById('markCompleteBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Marking...';
+    
+    fetch(`/api/mark_lesson_complete/${lessonId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage('<i class="fas fa-check-circle me-2"></i> Lesson marked as complete!');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check-circle me-2"></i> Mark as Complete';
+            alert('Error: ' + (data.error || 'Could not mark lesson as complete'));
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle me-2"></i> Mark as Complete';
+        alert('Error: Could not mark lesson as complete');
+    });
+}
+
+function markLessonIncomplete(lessonId) {
+    const btn = document.getElementById('markIncompleteBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Updating...';
+    
+    fetch(`/api/mark_lesson_progress/${lessonId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ status: 'in_progress' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage('<i class="fas fa-undo me-2"></i> Lesson marked as incomplete.');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-undo me-1"></i> Mark as Incomplete';
+            alert('Error: ' + (data.error || 'Could not update lesson status'));
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-undo me-1"></i> Mark as Incomplete';
+        alert('Error: Could not update lesson status');
+    });
 }
 </script>
 {% endblock %}

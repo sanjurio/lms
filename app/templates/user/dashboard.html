@@ -118,6 +118,41 @@
     </div>
 </section>
 
+{% if progress_stats and progress_stats.total_lessons > 0 %}
+<!-- Overall Progress Card -->
+<section class="section" style="padding-top: 0;">
+    <div class="container">
+        <div class="card mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+            <div class="card-body text-white">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="mb-2"><i class="fas fa-chart-line me-2"></i>Your Learning Progress</h5>
+                        <div class="progress mb-2" style="height: 20px; background: rgba(255,255,255,0.3);">
+                            <div class="progress-bar bg-light text-dark" role="progressbar" style="width: {{ progress_stats.completion_percentage|round|int }}%;">
+                                {{ progress_stats.completion_percentage|round|int }}%
+                            </div>
+                        </div>
+                        <small>{{ progress_stats.completed_lessons }} of {{ progress_stats.total_lessons }} lessons completed</small>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        <div class="d-flex justify-content-md-end gap-3">
+                            <div class="text-center">
+                                <h3 class="mb-0">{{ progress_stats.completed_lessons }}</h3>
+                                <small>Completed</small>
+                            </div>
+                            <div class="text-center">
+                                <h3 class="mb-0">{{ progress_stats.in_progress_lessons }}</h3>
+                                <small>In Progress</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 {# single site-wide placeholder #}
 {% set placeholder = url_for('static', filename='img/course-placeholder.svg') %}
 
@@ -167,6 +202,22 @@
                     <h3 class="course-title">{{ course.title }}</h3>
                     <p class="course-description">{{ course.description|truncate(100) }}</p>
 
+                    {% set cp = course_progress_list|selectattr('course_id', 'equalto', course.id)|first %}
+                    {% if cp and cp.total > 0 %}
+                    <div class="course-progress mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">Progress</small>
+                            <small class="text-muted">{{ cp.completed }}/{{ cp.total }}</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar {% if cp.percentage == 100 %}bg-success{% else %}bg-primary{% endif %}" role="progressbar" style="width: {{ cp.percentage }}%;"></div>
+                        </div>
+                        {% if cp.percentage == 100 %}
+                        <small class="text-success"><i class="fas fa-check-circle me-1"></i>Completed!</small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
                     <div class="course-meta mt-auto mb-3">
                         <div class="mb-2">
                             <i class="fas fa-calendar-alt"></i> Updated: {{ course.updated_at.strftime('%d %b, %Y') }}
@@ -180,7 +231,13 @@
                     </div>
 
                     <a href="{{ url_for('view_course', course_id=course.id) }}" class="btn btn-primary">
-                        <i class="fas fa-play-circle me-1"></i> View Course
+                        {% if cp and cp.percentage == 100 %}
+                        <i class="fas fa-redo me-1"></i> Review Course
+                        {% elif cp and cp.percentage > 0 %}
+                        <i class="fas fa-play-circle me-1"></i> Continue Course
+                        {% else %}
+                        <i class="fas fa-play-circle me-1"></i> Start Course
+                        {% endif %}
                     </a>
                 </div>
             </div>

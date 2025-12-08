@@ -212,6 +212,26 @@ def register_routes(app):
 
         # Get recommended courses
         recommended_courses = get_recommended_courses(current_user)
+        
+        # Calculate per-course progress for dashboard
+        course_progress_list = []
+        for course in available_courses:
+            lessons = Lesson.query.filter_by(course_id=course.id).all()
+            completed = 0
+            total = len(lessons)
+            for lesson in lessons:
+                progress = UserLessonProgress.query.filter_by(
+                    user_id=current_user.id,
+                    lesson_id=lesson.id
+                ).first()
+                if progress and progress.status == 'completed':
+                    completed += 1
+            course_progress_list.append({
+                'course_id': course.id,
+                'completed': completed,
+                'total': total,
+                'percentage': round((completed / total * 100) if total > 0 else 0)
+            })
 
         return render_template('user/dashboard.html',
                                title='Dashboard',
@@ -220,7 +240,9 @@ def register_routes(app):
                                recent_activities=recent_activities,
                                bookmarked_lessons=bookmarked_lessons,
                                current_lesson=current_lesson,
-                               recommended_courses=recommended_courses)
+                               recommended_courses=recommended_courses,
+                               progress_stats=progress_stats,
+                               course_progress_list=course_progress_list)
 
     @app.route('/logout')
     @login_required
@@ -525,11 +547,34 @@ def register_routes(app):
             return redirect(url_for('user_dashboard'))
 
         lessons = Lesson.query.filter_by(course_id=course.id).order_by(Lesson.order).all()
+        
+        lesson_progress = {}
+        completed_count = 0
+        for lesson in lessons:
+            progress = UserLessonProgress.query.filter_by(
+                user_id=current_user.id,
+                lesson_id=lesson.id
+            ).first()
+            if progress:
+                lesson_progress[lesson.id] = progress.status
+                if progress.status == 'completed':
+                    completed_count += 1
+            else:
+                lesson_progress[lesson.id] = 'not_started'
+        
+        total_lessons = len(lessons)
+        course_progress = {
+            'total': total_lessons,
+            'completed': completed_count,
+            'percentage': round((completed_count / total_lessons * 100) if total_lessons > 0 else 0)
+        }
 
         return render_template('user/course.html',
                                title=course.title,
                                course=course,
-                               lessons=lessons)
+                               lessons=lessons,
+                               lesson_progress=lesson_progress,
+                               course_progress=course_progress)
 
     @app.route('/lessons/<int:lesson_id>')
     @login_required
@@ -651,6 +696,92 @@ def register_routes(app):
                                interests=interests,
                                interest_status=user_interests_status,
                                form=form)
+
+    @app.route('/admin/users/<int:user_id>/progress')
+    @login_required
+    def admin_user_progress(user_id):
+        if not current_user.is_admin:
+            abort(403)
+
+        user = User.query.get_or_404(user_id)
+        
+        # Get all courses the user has access to via interests
+        user_interests = UserInterest.query.filter_by(
+            user_id=user_id,
+            access_granted=True
+        ).all()
+        
+        interest_ids = [ui.interest_id for ui in user_interests]
+        
+        course_ids = set()
+        
+        # Get courses for these interests
+        if interest_ids:
+            course_interests = CourseInterest.query.filter(
+                CourseInterest.interest_id.in_(interest_ids)
+            ).all()
+            course_ids.update([ci.course_id for ci in course_interests])
+        
+        # Also get courses from direct enrollments (UserCourse)
+        user_courses = UserCourse.query.filter_by(user_id=user_id).all()
+        course_ids.update([uc.course_id for uc in user_courses])
+        
+        # Get all unique courses
+        courses = Course.query.filter(Course.id.in_(course_ids)).all() if course_ids else []
+        
+        # Build progress data for each course
+        course_progress_data = []
+        total_lessons_all = 0
+        completed_lessons_all = 0
+        
+        for course in courses:
+            lessons = Lesson.query.filter_by(course_id=course.id).order_by(Lesson.order).all()
+            lesson_data = []
+            completed_count = 0
+            
+            for lesson in lessons:
+                progress = UserLessonProgress.query.filter_by(
+                    user_id=user_id,
+                    lesson_id=lesson.id
+                ).first()
+                
+                status = progress.status if progress else 'not_started'
+                completed_at = progress.completed_at if progress and progress.completed_at else None
+                
+                if status == 'completed':
+                    completed_count += 1
+                    completed_lessons_all += 1
+                
+                lesson_data.append({
+                    'lesson': lesson,
+                    'status': status,
+                    'completed_at': completed_at
+                })
+                total_lessons_all += 1
+            
+            total = len(lessons)
+            percentage = round((completed_count / total * 100) if total > 0 else 0)
+            
+            course_progress_data.append({
+                'course': course,
+                'lessons': lesson_data,
+                'completed': completed_count,
+                'total': total,
+                'percentage': percentage
+            })
+        
+        overall_percentage = round((completed_lessons_all / total_lessons_all * 100) if total_lessons_all > 0 else 0)
+        
+        return render_template('admin/user_progress.html',
+                               title=f'Progress for {user.username}',
+                               user=user,
+                               course_progress=course_progress_data,
+                               overall_stats={
+                                   'total_courses': len(courses),
+                                   'total_lessons': total_lessons_all,
+                                   'completed_lessons': completed_lessons_all,
+                                   'percentage': overall_percentage
+                               })
 
     @app.route('/admin/user-interest/update', methods=['POST'])
     @login_required
