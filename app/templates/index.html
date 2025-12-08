@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">Erlang Systems LMS</h1>
+            <p class="hero-subtitle">Master enterprise Erlang/OTP development with our comprehensive training platform designed for telecom and distributed systems.</p>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('user_dashboard') }}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Register</a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline btn-lg ms-2">Sign In</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Courses -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Why Choose Our Platform?</h2>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="text-center mb-3">Enterprise-Grade Training</h3>
+                        <p class="text-center">Our courses are designed by Erlang/OTP experts with years of experience in telecom and distributed systems. Master the technology that powers WhatsApp, RabbitMQ, and more.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-route"></i>
+                        </div>
+                        <h3 class="text-center mb-3">Domain-Based Access</h3>
+                        <p class="text-center">THBS employees get full access to video demonstrations, while BT employees access comprehensive text documentation. All content tailored for enterprise Erlang development.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-laptop-code"></i>
+                        </div>
+                        <h3 class="text-center mb-3">Hands-on Projects</h3>
+                        <p class="text-center">Theory is just the beginning. Apply your knowledge with challenging projects and exercises that prepare you for real-world AI applications.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3 class="text-center mb-3">Community Support</h3>
+                        <p class="text-center">Connect with fellow learners through our dedicated forums. Share ideas, solve problems together, and build your professional network.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Topics -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Featured Topics</h2>
+        <div class="course-grid">
+            <div class="card">
+                <div class="card-body">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3 class="text-center">Machine Learning</h3>
+                    <p>Master the fundamentals of machine learning algorithms, from supervised to unsupervised learning. Build models that can predict outcomes and discover patterns in complex datasets.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="feature-icon">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <h3 class="text-center">Deep Learning</h3>
+                    <p>Explore neural networks, convolutional networks, and recurrent networks for complex pattern recognition. Understand the technology behind modern AI breakthroughs.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="feature-icon">
+                        <i class="fas fa-comment-dots"></i>
+                    </div>
+                    <h3 class="text-center">Natural Language Processing</h3>
+                    <p>Discover how to process and analyze human language using computational methods. Build applications that can understand, generate, and interact with human text.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">How It Works</h2>
+        <div class="row">
+            <div class="col-md-3 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <h4>1. Sign Up</h4>
+                        <p class="mt-auto">Create your account with secure two-factor authentication</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-thumbs-up"></i>
+                        </div>
+                        <h4>2. Get Approved</h4>
+                        <p class="mt-auto">Our admin team will quickly review your application</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <h4>3. Select Interests</h4>
+                        <p class="mt-auto">Choose the AI topics that excite you the most</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h4>4. Start Learning</h4>
+                        <p class="mt-auto">Access your personalized learning dashboard</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="section">
+    <div class="container">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <h2 class="mb-4">Ready to Begin Your AI Journey?</h2>
+                <p class="mb-4">Join thousands of students already mastering artificial intelligence on our platform.</p>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('user_dashboard') }}" class="btn btn-primary btn-lg">Go to Your Dashboard</a>
+                {% else %}
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Register</a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline btn-lg ms-2">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

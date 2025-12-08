@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+/* --- Two-column course header layout --- */
+.course-detail {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* row layout: left image, right text */
+.course-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: stretch;
+  background: #15171b;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(5,9,15,0.6);
+}
+
+/* image container (left column) */
+.course-image-wrap {
+  flex: 0 0 360px;
+  max-width: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0b1220;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.course-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.course-image.logo {
+  object-fit: contain;
+  padding: 12px;
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+  background: transparent;
+}
+
+/* right column (content) */
+.course-header-content {
+  flex: 1;
+  padding: 24px;
+  color: #d9e1ea;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.course-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.course-description {
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 16px;
+}
+
+/* badge and small info */
+.course-header-content small {
+  color: rgba(255,255,255,0.6);
+}
+
+/* responsiveness */
+@media (max-width: 768px) {
+  .course-header {
+    flex-direction: column;
+  }
+  .course-image-wrap {
+    width: 100%;
+    max-width: 100%;
+    flex: 1 1 auto;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section course-detail">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('user_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ course.title }}</li>
+        </ol>
+    </nav>
+
+    {# Placeholder for fallback #}
+    {% set placeholder = url_for('static', filename='img/course-placeholder.svg') %}
+    {% set tmp_url = (course.cover_image_url or '') | lower %}
+    {% if '?' in tmp_url %}
+        {% set tmp_url = tmp_url[:tmp_url.find('?')] %}
+    {% endif %}
+    {% set is_logo = course.cover_image_url and (tmp_url.endswith('.svg') or tmp_url.endswith('.png') or tmp_url.endswith('.jpg') or tmp_url.endswith('.jpeg')) %}
+
+    <!-- Two-column header -->
+    <div class="course-header mb-4">
+        <div class="course-image-wrap">
+            <img
+                src="{{ course.cover_image_url or placeholder }}"
+                alt="{{ (course.title ~ ' — course cover') | e }}"
+                class="course-image {{ 'logo' if is_logo else '' }}"
+                loading="lazy"
+                decoding="async"
+                onerror="(function(i,p){ if(i.src===p) return; i.onerror=null; i.src=p; })(this,'{{ placeholder }}');" />
+        </div>
+
+        <div class="course-header-content">
+            <h1 class="course-title">{{ course.title }}</h1>
+
+            {% if course.is_thbs_restricted() %}
+            <div class="alert alert-warning d-flex align-items-start mb-3">
+                <i class="fas fa-lock me-2 mt-1"></i>
+                <div>
+                    <strong>Domain Restricted Content</strong><br>
+                    <strong>This course contains advanced Erlang-L3 content accessible only to THBS domain users.</strong>
+                </div>
+            </div>
+            {% endif %}
+
+            <p class="course-description">{{ course.description }}</p>
+            <p><small>Last updated: {{ course.updated_at.strftime('%d %b, %Y') }}</small></p>
+
+            <div class="mt-3">
+                <h5>Topics covered:</h5>
+                <div class="mb-3">
+                    {% for interest in course.interests %}
+                    <span class="badge bg-primary me-1">{{ interest.name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- <a href="{{ url_for('course_forum', course_id=course.id) }}" class="btn btn-outline-primary mt-2">
+                <i class="fas fa-comments me-1"></i> Course Discussion Forum
+            </a> -->
+        </div>
+    </div>
+
+    <h2 class="section-title">Course Content</h2>
+
+    {% if not lessons %}
+    <div class="alert alert-info">
+        <h5><i class="fas fa-info-circle"></i> No content available</h5>
+        <p>This course doesn't have any lessons added yet. Please check back later or contact an administrator.</p>
+        <p><small class="text-muted">Course created: {{ course.created_at.strftime('%d %b, %Y') }}</small></p>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body">
+            <div class="list-group">
+                {% for lesson in lessons %}
+                <a href="{{ url_for('view_lesson', lesson_id=lesson.id) }}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between align-items-center">
+                        <h5 class="mb-1">{{ lesson.order }}. {{ lesson.title }}</h5>
+                        <small class="text-muted">{{ lesson.duration if lesson.duration else '' }}</small>
+                    </div>
+                    {% if lesson.description %}
+                    <p class="mb-1 text-muted">{{ lesson.description|truncate(140) }}</p>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- JS for auto logo detection -->
+<script>
+document.querySelectorAll('.course-image').forEach(img => {
+  const markIfWide = () => {
+    try {
+      if (!img.classList.contains('logo') && img.naturalWidth && img.naturalHeight) {
+        if ((img.naturalWidth / img.naturalHeight) > 2.2) img.classList.add('logo');
+      }
+    } catch(e){}
+  };
+
+  if (img.complete) {
+    setTimeout(markIfWide, 0);
+  } else {
+    img.addEventListener('load', markIfWide, { once: true });
+    img.addEventListener('error', () => setTimeout(markIfWide, 0), { once: true });
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h1 class="section-title">Your Profile</h1>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Account Information</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('profile') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group">
+                            {{ form.username.label(class="form-label") }}
+                            {{ form.username(class="form-control", readonly=true, style="background-color: #2a2d31; cursor: not-allowed;") }}
+                            <div class="form-text">Username cannot be changed</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control", readonly=true, style="background-color: #2a2d31; cursor: not-allowed;") }}
+                            <div class="form-text">Email cannot be changed</div>
+                        </div>
+                        
+                        <hr>
+                        <h4>Change Password</h4>
+                        <p class="text-muted">Leave blank if you don't want to change your password</p>
+                        
+                        <div class="form-group">
+                            {{ form.current_password.label(class="form-label") }}
+                            {{ form.current_password(class="form-control") }}
+                            <div class="error-message">
+                                {% for error in form.current_password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.new_password.label(class="form-label") }}
+                            {{ form.new_password(class="form-control") }}
+                            <div class="error-message">
+                                {% for error in form.new_password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            <div class="form-text">Password must include uppercase, lowercase, and numbers</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.new_password2.label(class="form-label") }}
+                            {{ form.new_password2(class="form-control") }}
+                            <div class="error-message">
+                                {% for error in form.new_password2.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>Two-Factor Authentication</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <i class="bi bi-shield-check me-2"></i> Two-factor authentication is enabled and mandatory.
+                    </div>
+                    
+                    <p>For your account security, two-factor authentication is required for all users on this platform.</p>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i> If you've lost access to your authenticator app, please contact an administrator for assistance.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>Account Status</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Member since:</strong> {{ current_user.created_at.strftime('%d %b, %Y') }}</p>
+                    <p><strong>Role:</strong> {% if current_user.is_admin %}Administrator{% else %}Student{% endif %}</p>
+                    <p><strong>Status:</strong> 
+                        {% if current_user.is_approved %}
+                        <span class="badge badge-success">Approved</span>
+                        {% else %}
+                        <span class="badge badge-warning">Pending Approval</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/validation.js') }}"></script>
+<script src="{{ url_for('static', filename='js/2fa.js') }}"></script>
+{% endblock %}

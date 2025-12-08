@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h1 class="section-title">{{ 'Edit Lesson' if lesson else 'Add New Lesson' }}</h1>
+    
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}" class="active">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Interests</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Interest Requests</a></li>
+        </ul>
+    </div>
+    
+    <div class="admin-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin_courses') }}">Courses</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin_lessons', course_id=course.id) }}">{{ course.title }} Lessons</a></li>
+                <li class="breadcrumb-item active">{{ 'Edit Lesson' if lesson else 'Add Lesson' }}</li>
+            </ol>
+        </nav>
+        
+        <div class="admin-form-container">
+            <form method="post" action="">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-group">
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control") }}
+                    <div class="error-message">
+                        {% for error in form.title.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    {{ form.order.label(class="form-label") }}
+                    {{ form.order(class="form-control", type="number") }}
+                    <div class="form-text">The order in which this lesson appears in the course (e.g., 1 for first lesson)</div>
+                    <div class="error-message">
+                        {% for error in form.order.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    {{ form.content.label(class="form-label") }}
+                    
+                    <div class="editor-toolbar">
+                        <button type="button" onclick="formatText('b')"><i class="fas fa-bold"></i></button>
+                        <button type="button" onclick="formatText('i')"><i class="fas fa-italic"></i></button>
+                        <button type="button" onclick="formatText('h2')"><i class="fas fa-heading"></i></button>
+                        <button type="button" onclick="formatText('ul')"><i class="fas fa-list-ul"></i></button>
+                        <button type="button" onclick="formatText('ol')"><i class="fas fa-list-ol"></i></button>
+                        <button type="button" onclick="formatText('code')"><i class="fas fa-code"></i></button>
+                        <button type="button" onclick="formatText('pre')"><i class="fas fa-file-code"></i></button>
+                        <button type="button" onclick="formatText('a')"><i class="fas fa-link"></i></button>
+                    </div>
+                    
+                    {# hidden textarea that WTForms expects - keep name so server receives value #}
+<textarea id="content" name="{{ form.content.name }}" style="display:none;">{{ form.content.data|e }}</textarea>
+
+{# Quill editor container; we initialize it with the textarea's current HTML #}
+<div id="quill-editor" class="quill-dark" aria-label="Lesson content editor"></div>
+<div class="form-text">You can use the editor toolbar to format content. The saved content will be HTML.</div>
+
+                    <div class="form-text">You can use HTML tags for formatting.</div>
+                    <div class="error-message">
+                        {% for error in form.content.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('admin_lessons', course_id=course.id) }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <!-- Quill (CDN) - no API key needed -->
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+
+  <script>
+    (function () {
+      // Grab the hidden textarea and initial HTML (server-provided)
+      const textarea = document.getElementById('content');
+      const initialHtml = textarea.value || '';
+
+      // Create Quill with toolbar you want
+      const quill = new Quill('#quill-editor', {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['blockquote', 'code-block'],
+            ['link', 'image'],
+            ['clean']
+          ]
+        }
+      });
+
+      // Set initial content (safe because server provided it). Use innerHTML, not text.
+      quill.root.innerHTML = initialHtml;
+
+      // On form submit, copy HTML back to textarea
+      const form = textarea.closest('form');
+      form.addEventListener('submit', function (e) {
+        // Ensure the textarea always has the latest HTML
+        textarea.value = quill.root.innerHTML;
+      });
+
+      // optional: keep tabindex / accessibility
+      quill.root.setAttribute('aria-label', 'Lesson content editable area');
+
+      // Basic image handler NOTE: Quill's default image uses base64 paste.
+      // If you want custom image upload, we can add a handler later.
+    })();
+  </script>
+
+  {# optional small style to make Quill dark and match your theme #}
+  <style>
+    /* Editor container sizing */
+    #quill-editor {
+      min-height: 320px;
+      background: #0f1720; /* slightly lighter/darker to match your theme */
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: inset 0 6px 18px rgba(0,0,0,0.45);
+    }
+
+    /* Toolbar style tweaks */
+    .ql-toolbar.ql-snow {
+      background: #0d1720;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    /* Editor content colors (dark) */
+    .ql-editor {
+      color: #d9e6f2;
+      background: transparent;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* Make headings stand out */
+    .ql-editor h1, .ql-editor h2, .ql-editor h3 {
+      color: #50e3c2;
+      margin-top: 0;
+    }
+
+    /* Code block style */
+    .ql-snow .ql-editor pre.ql-syntax {
+      background: #0b1220;
+      color: #c7d2e0;
+      padding: 12px;
+      border-radius: 6px;
+      overflow: auto;
+    }
+  </style>
+{% endblock %}

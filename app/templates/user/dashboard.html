@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+/* --- Course card image layout (user dashboard) --- */
+
+/* grid: each card limited to 260-320px, centered when fewer columns */
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
+  gap: 28px;
+  justify-content: start;  /* center cards when there is extra space */
+  align-items: start;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1200px; /* keeps the content area reasonable */
+  padding: 0 12px;
+}
+
+/* card adjustments to match admin style */
+.course-card {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #15171b; /* adjust to match your theme */
+  box-shadow: 0 8px 20px rgba(5,9,15,0.6);
+  display: flex;
+  flex-direction: column;
+  min-height: 420px; /* ensure consistent height */
+  width: 100%;
+  max-width: 320px; /* prevent card from growing too wide */
+}
+
+/* image wrapper (fixed area at top) */
+.course-image-wrap {
+  width: 100%;
+  height: 220px;              /* visual balance with card height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
+  background-color: #0b1220;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+/* default behavior for photographic covers */
+.course-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: opacity 220ms ease-in-out;
+}
+
+/* logos and flat graphics: show whole image centered */
+.course-image.logo {
+  object-fit: contain;
+  padding: 12px;
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+  background: transparent;
+}
+
+/* card body */
+.course-card .card-body {
+  padding: 20px;
+  color: #d9e1ea;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* titles + description */
+.course-title {
+  font-size: 1.2rem;
+  margin: 0 0 6px 0;
+  color: #fff;
+  line-height: 1.1;
+}
+.course-description {
+  color: rgba(255,255,255,0.75);
+  margin: 0;
+}
+
+/* meta and button alignment */
+.course-meta { font-size: 0.9rem; color: rgba(255,255,255,0.6); }
+.course-card .btn {
+  margin-top: 12px;
+}
+
+/* small responsive tweak */
+@media (max-width: 768px) {
+  .course-image-wrap { height: 180px; }
+  .course-card { min-height: 380px; max-width: 100%; }
+  .course-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); padding: 0 8px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<section class="hero-section" style="padding: 2rem 0; margin-bottom: 2rem;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="hero-title" style="font-size: 2rem;">Welcome {{ current_user.username }}!</h1>
+                <p class="hero-subtitle" style="font-size: 1.1rem; margin-bottom: 0;">Continue your Erlang journey and expand your knowledge.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{{ url_for('user_interests') }}" class="btn btn-outline">Manage Interests</a>
+                <a href="{{ url_for('forum_index') }}" class="btn btn-primary ms-2">Join Discussions</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# single site-wide placeholder #}
+{% set placeholder = url_for('static', filename='img/course-placeholder.svg') %}
+
+{% if not courses %}
+<!-- No Courses State -->
+<div class="container">
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <div class="feature-icon mb-4">
+                <i class="fas fa-book-reader"></i>
+            </div>
+            <h2 class="mb-3">No Courses Available Yet</h2>
+            <p class="mb-4">You don't have access to any courses at the moment. Please select your interests and wait for admin approval.</p>
+            <a href="{{ url_for('user_interests') }}" class="btn btn-primary btn-lg">Select Your Interests</a>
+        </div>
+    </div>
+</div>
+{% else %}
+<!-- Your Courses Section -->
+<section class="section">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0">Your Courses</h2>
+        </div>
+
+        <div class="course-grid">
+            {% for course in courses %}
+            <div class="card course-card">
+                <div class="course-image-wrap">
+                    {# safe lowercasing and strip querystring if present #}
+                    {% set tmp_url = (course.cover_image_url or '') | lower %}
+                    {% if '?' in tmp_url %}
+                        {% set tmp_url = tmp_url[:tmp_url.find('?')] %}
+                    {% endif %}
+                    {% set is_logo = course.cover_image_url and (tmp_url.endswith('.svg') or tmp_url.endswith('.png') or tmp_url.endswith('.jpg') or tmp_url.endswith('.jpeg')) %}
+
+                    <img
+                        src="{{ course.cover_image_url or placeholder }}"
+                        alt="{{ (course.title ~ ' — course cover')|e }}"
+                        class="course-image {{ 'logo' if is_logo else '' }}"
+                        loading="lazy"
+                        decoding="async"
+                        onerror="(function(i,p){ if(i.src===p) return; i.onerror=null; i.src=p; })(this,'{{ placeholder }}');" />
+                </div>
+
+                <div class="card-body">
+                    <h3 class="course-title">{{ course.title }}</h3>
+                    <p class="course-description">{{ course.description|truncate(100) }}</p>
+
+                    <div class="course-meta mt-auto mb-3">
+                        <div class="mb-2">
+                            <i class="fas fa-calendar-alt"></i> Updated: {{ course.updated_at.strftime('%d %b, %Y') }}
+                        </div>
+                        <div>
+                            <i class="fas fa-tag"></i>
+                            {% for interest in course.interests %}
+                            <span class="badge bg-primary bg-opacity-25 text-primary me-1">{{ interest.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <a href="{{ url_for('view_course', course_id=course.id) }}" class="btn btn-primary">
+                        <i class="fas fa-play-circle me-1"></i> View Course
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if recommended_courses %}
+<!-- Recommended Courses Section -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Recommended For You <i class="fas fa-lightbulb" style="color: #ffc107;"></i></h2>
+        <p class="text-muted mb-4">Based on your interests, we think you might enjoy these courses</p>
+
+        <div class="course-grid">
+            {% for course in recommended_courses %}
+            <div class="card course-card">
+                <div class="course-image-wrap">
+                    {% set tmp_url = (course.cover_image_url or '') | lower %}
+                    {% if '?' in tmp_url %}
+                        {% set tmp_url = tmp_url[:tmp_url.find('?')] %}
+                    {% endif %}
+                    {% set is_logo = course.cover_image_url and (tmp_url.endswith('.svg') or tmp_url.endswith('.png') or tmp_url.endswith('.jpg') or tmp_url.endswith('.jpeg')) %}
+
+                    <img
+                        src="{{ course.cover_image_url or placeholder }}"
+                        alt="{{ (course.title ~ ' — cover')|e }}"
+                        class="course-image {{ 'logo' if is_logo else '' }}"
+                        loading="lazy"
+                        decoding="async"
+                        onerror="(function(i,p){ if(i.src===p) return; i.onerror=null; i.src=p; })(this,'{{ placeholder }}');" />
+                </div>
+
+                <div class="card-body">
+                    <div class="recommendation-badge mb-2">
+                        <span class="badge bg-info">Recommended</span>
+                        {% if course.is_thbs_restricted() %}
+                        <span class="badge bg-warning text-dark ms-2">
+                            <i class="fas fa-lock me-1"></i>THBS Only
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <h3 class="course-title">{{ course.title }}</h3>
+                    <p class="course-description">{{ course.description|truncate(100) }}</p>
+
+                    <div class="course-meta mt-auto mb-3">
+                        <div class="mb-2">
+                            <i class="fas fa-calendar-alt"></i> Updated: {{ course.updated_at.strftime('%d %b, %Y') }}
+                        </div>
+                        <div>
+                            <i class="fas fa-tag"></i>
+                            {% for interest in course.interests %}
+                            <span class="badge bg-info bg-opacity-25 text-info me-1">{{ interest.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <a href="{{ url_for('view_course', course_id=course.id) }}" class="btn btn-outline">
+                        <i class="fas fa-eye me-1"></i> Explore Course
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- JS: auto-classify very wide images as logos (works with cached images) -->
+<script>
+document.querySelectorAll('img.course-image').forEach(img => {
+  const markIfWide = () => {
+    try {
+      if (!img.classList.contains('logo') && img.naturalWidth && img.naturalHeight) {
+        if ((img.naturalWidth / img.naturalHeight) > 2.2) img.classList.add('logo');
+      }
+    } catch(e){}
+  };
+
+  if (img.complete) {
+    setTimeout(markIfWide, 0);
+  } else {
+    img.addEventListener('load', markIfWide, { once: true });
+    img.addEventListener('error', () => setTimeout(markIfWide, 0), { once: true });
+  }
+});
+</script>
+{% endblock %}

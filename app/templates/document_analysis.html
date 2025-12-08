@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% extends "base.html" %}
+    {% block head %}
+    <title>Document Analysis - {{ title }}</title>
+    {% endblock %}
+</head>
+<body>
+    {% block content %}
+    <div class="container mt-5">
+        <h1>Document Analysis</h1>
+        <p>Upload a document (PDF, DOCX, or TXT) to analyze its content and generate a summary.</p>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Upload Document</h5>
+                        <div class="mb-3">
+                            <input type="file" class="form-control" id="documentFile" accept=".pdf,.docx,.txt">
+                            <small class="text-muted">Supported formats: PDF, DOCX, TXT</small>
+                        </div>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-primary" onclick="uploadDocument()">Analyze Document</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">How It Works</h5>
+                        <p>This tool analyzes documents and extracts key information. Simply upload a document and the system will:</p>
+                        <ol>
+                            <li>Extract the text content from your document</li>
+                            <li>Generate a concise summary of the main points</li>
+                            <li>Create a list of questions and answers based on the content</li>
+                        </ol>
+                        <p>This can be useful for quickly understanding long documents or creating study materials.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div id="analysisResults" style="display: none;">
+                    <h3>Analysis Results</h3>
+                    <div id="summary" class="mb-4">
+                        <h4>Summary</h4>
+                        <div id="summaryContent" class="alert alert-info"></div>
+                    </div>
+                    <div id="questionsSection">
+                        <h4>Questions & Answers</h4>
+                        <div id="questionsList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function uploadDocument() {
+            const fileInput = document.getElementById('documentFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file first.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show loading state
+            document.getElementById('analysisResults').style.display = 'none';
+
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            fetch('/api/analyze-document', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    throw new Error(data.message || 'An error occurred while analyzing the document');
+                }
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+
+        function displayResults(data) {
+            document.getElementById('analysisResults').style.display = 'block';
+            document.getElementById('summaryContent').textContent = data.summary;
+
+            const questionsList = document.getElementById('questionsList');
+            questionsList.innerHTML = '';
+
+            data.questions.forEach(qa => {
+                const qaDiv = document.createElement('div');
+                qaDiv.className = 'card mb-3';
+                qaDiv.innerHTML = `
+                    <div class="card-body">
+                        <h5 class="card-title">${qa.question}</h5>
+                        <p class="card-text">${qa.answer}</p>
+                    </div>
+                `;
+                questionsList.appendChild(qaDiv);
+            });
+        }
+    </script>
+    {% endblock %}
+</body>
+</html>

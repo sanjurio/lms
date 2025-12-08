@@ -1,0 +1,13 @@
+<svg width="600" height="340" viewBox="0 0 600 340" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="340" rx="16" fill="#0f172a"></rect>
+  <rect x="30" y="30" width="540" height="280" rx="12" fill="#1e293b" stroke="#334155" stroke-width="2"></rect>
+  <g fill="#475569">
+    <path d="M160 240h280v12H160z"></path>
+    <path d="M220 210h160v10H220z"></path>
+    <path d="M250 100h100v70H250z" opacity="0.3"></path>
+    <circle cx="300" cy="140" r="60" stroke="#475569" stroke-width="3" fill="none" opacity="0.5"></circle>
+  </g>
+  <text x="50%" y="85%" text-anchor="middle" fill="#64748b" font-family="Segoe UI, Roboto, sans-serif" font-size="18">
+    No Cover Image
+  </text>
+</svg>

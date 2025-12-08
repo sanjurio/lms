@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="section">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('user_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('view_course', course_id=course.id) }}">{{ course.title }}</a></li>
+            <li class="breadcrumb-item active">{{ lesson.title }}</li>
+        </ol>
+    </nav>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h1 class="card-title">{{ lesson.title }}</h1>
+                    <p class="text-muted">Lesson {{ lesson.order }} of {{ course.title }}</p>
+                </div>
+            </div>
+            
+            
+            
+            <hr>
+            
+            <div class="lesson-content">
+                {% if not lesson.content or lesson.content.strip() == '' %}
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-info-circle"></i> No content available</h5>
+                    <p>This lesson doesn't have any content added yet. Please check back later or contact an administrator.</p>
+                </div>
+                {% else %}
+                    {% if lesson.content_type == 'text' %}
+                        {% if can_view_content %}
+                            {{ lesson.content|safe }}
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <h5><i class="fas fa-lock"></i> Access Restricted</h5>
+                                <p>You don't have permission to view text content. Please contact an administrator for access.</p>
+                            </div>
+                        {% endif %}
+                    {% elif lesson.content_type == 'video' %}
+                        {% if can_view_content %}
+                            {% if lesson.video_url %}
+                                <div class="embed-responsive embed-responsive-16by9 mb-3">
+                                    <iframe class="embed-responsive-item" src="{{ lesson.video_url }}" allowfullscreen></iframe>
+                                </div>
+                            {% endif %}
+                            {{ lesson.content|safe }}
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <h5><i class="fas fa-lock"></i> Video Access Restricted</h5>
+                                <p>You don't have permission to view video content. This feature is available for THBS users only.</p>
+                            </div>
+                        {% endif %}
+                    {% elif lesson.content_type == 'mixed' %}
+                        {% if can_view_content.text %}
+                            {{ lesson.content|safe }}
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <h5><i class="fas fa-lock"></i> Text Access Restricted</h5>
+                                <p>You don't have permission to view text content.</p>
+                            </div>
+                        {% endif %}
+                        
+                        {% if lesson.video_url %}
+                            {% if can_view_content.video %}
+                                <div class="embed-responsive embed-responsive-16by9 mt-3">
+                                    <iframe class="embed-responsive-item" src="{{ lesson.video_url }}" allowfullscreen></iframe>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning mt-3">
+                                    <h5><i class="fas fa-lock"></i> Video Access Restricted</h5>
+                                    <p>You don't have permission to view video content. This feature is available for THBS users only.</p>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% else %}
+                        {{ lesson.content|safe }}
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 text-left">
+            {% if prev_lesson %}
+            <a href="{{ url_for('view_lesson', lesson_id=prev_lesson.id) }}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Previous: {{ prev_lesson.title }}
+            </a>
+            {% endif %}
+        </div>
+        <div class="col-md-6 text-right">
+            {% if next_lesson %}
+            <a href="{{ url_for('view_lesson', lesson_id=next_lesson.id) }}" class="btn btn-primary float-end">
+                Next: {{ next_lesson.title }} <i class="fas fa-arrow-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="mt-4 text-center">
+        <a href="{{ url_for('view_course', course_id=course.id) }}" class="btn btn-secondary">
+            <i class="fas fa-list"></i> Back to Course
+        </a>
+    </div>
+</div>
+
+<!-- JavaScript for Interactive Features -->
+<script>
+function showSuccessMessage(message) {
+    // Create a simple success alert
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success alert-dismissible fade show';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.section').insertBefore(alert, document.querySelector('.section').firstChild);
+    
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+        alert.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}
