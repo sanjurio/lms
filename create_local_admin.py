@@ -1,12 +1,14 @@
 """
-Script to create an admin user directly in the SQLite database
+Script to create an admin user directly in the database
 """
 import os
 import sys
 from datetime import datetime
 from werkzeug.security import generate_password_hash
-from app import app, db
+from app import create_app, db
 from app.models import User
+
+app = create_app()
 
 def create_admin_user():
     """Create admin user directly in the database"""
