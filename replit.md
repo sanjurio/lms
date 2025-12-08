@@ -4,6 +4,13 @@
 A comprehensive Learning Management System (LMS) for Enterprise Erlang/OTP development training designed for telecom and distributed systems. The platform features domain-based access control, course management, user progress tracking, forum discussions, and document analysis capabilities.
 
 ## Recent Changes (December 8, 2025)
+- **Course Completion Tracking System**: Implemented comprehensive progress tracking
+  - Lesson pages: Added "Mark as Complete/Incomplete" buttons with status display
+  - Course pages: Progress bar showing completion percentage and lesson status icons
+  - User dashboard: Overall progress card with stats and per-course progress bars
+  - Admin user progress page: Detailed view of any user's course completion status
+  - Dynamic button text (Start/Continue/Review Course) based on progress
+
 - **Replit Environment Setup**: Configured the application to run in Replit
   - Updated main.py to bind to 0.0.0.0:5000 for frontend access
   - Configured PostgreSQL database using Replit's built-in database
