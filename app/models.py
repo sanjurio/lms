@@ -176,6 +176,7 @@ class Course(db.Model):
     # Relationships with proper cascade delete
     lessons = db.relationship('Lesson', backref='course', lazy='dynamic', cascade='all, delete-orphan')
     forum_topics = db.relationship('ForumTopic', backref='course', lazy='dynamic', cascade='all, delete-orphan')
+    assignments = db.relationship('Assignment', backref='course', lazy='dynamic', cascade='all, delete-orphan')
     
     def is_thbs_restricted(self):
         """Check if this course is restricted to THBS domain users only"""
@@ -429,7 +430,6 @@ class Assignment(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     # Relationships
-    course = db.relationship('Course', backref=db.backref('assignments', lazy='dynamic'))
     creator = db.relationship('User', foreign_keys=[created_by])
     questions = db.relationship('Question', backref='assignment', lazy='dynamic', cascade='all, delete-orphan')
     
@@ -501,7 +501,7 @@ class UserAssignmentAttempt(db.Model):
     __tablename__ = 'user_assignment_attempts'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    assignment_id = db.Column(db.Integer, db.ForeignKey('assignments.id'), nullable=False)
+    assignment_id = db.Column(db.Integer, db.ForeignKey('assignments.id', ondelete='CASCADE'), nullable=False)
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime, nullable=True)
     score = db.Column(db.Integer, default=0)  # Percentage score
@@ -509,7 +509,7 @@ class UserAssignmentAttempt(db.Model):
     
     # Relationships
     user = db.relationship('User', backref=db.backref('assignment_attempts', lazy='dynamic'))
-    assignment = db.relationship('Assignment', backref=db.backref('attempts', lazy='dynamic'))
+    assignment = db.relationship('Assignment', backref=db.backref('attempts', lazy='dynamic', cascade='all, delete-orphan', passive_deletes=True))
     
     def __repr__(self):
         return f'<UserAssignmentAttempt user={self.user_id} assignment={self.assignment_id}>'

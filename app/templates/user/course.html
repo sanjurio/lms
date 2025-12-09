@@ -219,7 +219,7 @@
     {% endif %}
 
     <!-- Final Assignment Section -->
-    {% if course_assignment %}
+    {% if course_assignment and course_assignment.questions.count() > 0 %}
     <div class="card mt-4" style="border: 2px solid {% if assignment_passed %}#198754{% else %}#6f42c1{% endif %};">
         <div class="card-header" style="background: {% if assignment_passed %}linear-gradient(135deg, #198754, #20c997){% else %}linear-gradient(135deg, #6f42c1, #e83e8c){% endif %}; color: white;">
             <div class="d-flex justify-content-between align-items-center">
@@ -294,6 +294,20 @@
                 </button>
                 {% endif %}
             </div>
+        </div>
+    </div>
+    {% elif course_assignment %}
+    <div class="card mt-4 border-secondary">
+        <div class="card-header bg-secondary text-white">
+            <h4 class="mb-0">
+                <i class="fas fa-clipboard-check me-2"></i>
+                Final Assessment: {{ course_assignment.title }}
+            </h4>
+        </div>
+        <div class="card-body text-center py-4">
+            <i class="fas fa-hourglass-half fa-3x text-muted mb-3"></i>
+            <h5>Assessment Coming Soon</h5>
+            <p class="text-muted mb-0">The questions for this assessment are being prepared. Please check back later.</p>
         </div>
     </div>
     {% endif %}

@@ -1899,6 +1899,11 @@ def register_routes(app):
         
         assignment_status = []
         for assignment in assignments:
+            # Only show assignments that have questions
+            question_count = assignment.questions.count()
+            if question_count == 0:
+                continue
+                
             best_score = assignment.get_best_score(current_user.id)
             attempts = assignment.get_user_attempts(current_user.id)
             has_passed = assignment.user_has_passed(current_user.id)
@@ -1927,12 +1932,18 @@ def register_routes(app):
         
         if not assignment.is_active:
             flash('This assignment is not currently available.', 'warning')
-            return redirect(url_for('course_assignments', course_id=assignment.course_id))
+            return redirect(url_for('view_course', course_id=assignment.course_id))
+        
+        # Check if assignment has questions
+        question_count = assignment.questions.count()
+        if question_count == 0:
+            flash('This assessment is not yet ready. Questions are still being prepared.', 'warning')
+            return redirect(url_for('view_course', course_id=assignment.course_id))
         
         attempts = assignment.get_user_attempts(current_user.id)
         if assignment.max_attempts > 0 and len(attempts) >= assignment.max_attempts:
             flash('You have reached the maximum number of attempts for this assignment.', 'warning')
-            return redirect(url_for('course_assignments', course_id=assignment.course_id))
+            return redirect(url_for('view_course', course_id=assignment.course_id))
         
         attempt = UserAssignmentAttempt(
             user_id=current_user.id,
