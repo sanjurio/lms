@@ -74,6 +74,24 @@ def create_app():
         routes.register_routes(app)
         logger.debug("Routes imported successfully")
         
+        # Register CSRF error handler
+        from flask_wtf.csrf import CSRFError
+        from flask import flash, redirect, request, url_for
+        from urllib.parse import urlparse
+        
+        @app.errorhandler(CSRFError)
+        def handle_csrf_error(e):
+            flash('Your session has expired. Please try again.', 'warning')
+            # Safe redirect - validate referrer is from same host
+            referrer = request.referrer
+            if referrer:
+                parsed = urlparse(referrer)
+                # Only allow redirect to same host
+                if parsed.netloc == '' or parsed.netloc == request.host:
+                    return redirect(referrer)
+            # Fall back to index page
+            return redirect(url_for('index'))
+        
         # Create default admin user if it doesn't exist
         from .models import User
         from werkzeug.security import generate_password_hash

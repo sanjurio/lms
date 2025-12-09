@@ -3,6 +3,12 @@ import os
 class Config:
     SECRET_KEY = os.environ.get('SESSION_SECRET', 'dev-key-change-in-production')
     
+    # Session cookie settings for iframe/proxy environment
+    # Use SameSite=None for cross-site iframe contexts, Secure required with SameSite=None
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    
     # Use SQLite by default since the PostgreSQL credentials are currently invalid
     # To use PostgreSQL, ensure DATABASE_URL points to a valid database
     db_url = os.environ.get('DATABASE_URL')

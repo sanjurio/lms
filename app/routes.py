@@ -1907,16 +1907,22 @@ def register_routes(app):
         assignment = Assignment.query.get_or_404(assignment_id)
         form = AssignmentForm(obj=assignment)
         
-        if form.validate_on_submit():
-            assignment.title = form.title.data
-            assignment.description = form.description.data
-            assignment.passing_score = form.passing_score.data
-            assignment.time_limit_minutes = form.time_limit_minutes.data if form.time_limit_minutes.data and form.time_limit_minutes.data > 0 else None
-            assignment.max_attempts = form.max_attempts.data
-            assignment.is_active = form.is_active.data
-            db.session.commit()
-            flash('Assignment updated successfully!', 'success')
-            return redirect(url_for('admin_edit_assignment', assignment_id=assignment.id))
+        if request.method == 'POST':
+            if form.validate_on_submit():
+                assignment.title = form.title.data
+                assignment.description = form.description.data
+                assignment.passing_score = form.passing_score.data
+                assignment.time_limit_minutes = form.time_limit_minutes.data if form.time_limit_minutes.data and form.time_limit_minutes.data > 0 else None
+                assignment.max_attempts = form.max_attempts.data
+                assignment.is_active = form.is_active.data
+                db.session.commit()
+                flash('Assignment updated successfully!', 'success')
+                return redirect(url_for('admin_edit_assignment', assignment_id=assignment.id))
+            else:
+                # Show form validation errors
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        flash(f'{error}', 'danger')
         
         questions = Question.query.filter_by(assignment_id=assignment_id).order_by(Question.order).all()
         
