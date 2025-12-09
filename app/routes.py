@@ -1502,48 +1502,58 @@ def register_routes(app):
         courses = Course.query.all()
         users = User.query.filter_by(is_admin=False, is_approved=True).all()
         
-        form.course_id.choices = [(c.id, c.title) for c in courses]
+        form.course_ids.choices = [(c.id, c.title) for c in courses]
         form.user_ids.choices = [(u.id, f"{u.username} ({u.email})") for u in users]
         
         if form.validate_on_submit():
             deadline = datetime.utcnow() + timedelta(days=form.deadline_days.data) if form.deadline_days.data else None
             
+            added_courses = 0
+            skipped_courses = 0
+            
             if form.assignment_type.data == 'all':
-                # Check if already exists as global
-                existing = MandatoryCourse.query.filter_by(course_id=form.course_id.data, user_id=None).first()
-                if existing:
-                    flash('This course is already mandatory for all users.', 'warning')
-                else:
-                    mandatory = MandatoryCourse(
-                        course_id=form.course_id.data,
-                        user_id=None,
-                        deadline=deadline,
-                        assigned_by=current_user.id
-                    )
-                    db.session.add(mandatory)
-                    db.session.commit()
-                    flash('Course set as mandatory for all users!', 'success')
-            else:
-                # Assign to specific users
-                added_count = 0
-                for user_id in form.user_ids.data:
-                    existing = MandatoryCourse.query.filter_by(course_id=form.course_id.data, user_id=user_id).first()
-                    if not existing:
+                # Assign selected courses to all users
+                for course_id in form.course_ids.data:
+                    existing = MandatoryCourse.query.filter_by(course_id=course_id, user_id=None).first()
+                    if existing:
+                        skipped_courses += 1
+                    else:
                         mandatory = MandatoryCourse(
-                            course_id=form.course_id.data,
-                            user_id=user_id,
+                            course_id=course_id,
+                            user_id=None,
                             deadline=deadline,
                             assigned_by=current_user.id
                         )
                         db.session.add(mandatory)
-                        added_count += 1
+                        added_courses += 1
                 
                 db.session.commit()
-                flash(f'Course set as mandatory for {added_count} users!', 'success')
+                if added_courses > 0:
+                    flash(f'{added_courses} course(s) set as mandatory for all users!', 'success')
+                if skipped_courses > 0:
+                    flash(f'{skipped_courses} course(s) were already mandatory for all users.', 'warning')
+            else:
+                # Assign selected courses to specific users
+                total_assignments = 0
+                for course_id in form.course_ids.data:
+                    for user_id in form.user_ids.data:
+                        existing = MandatoryCourse.query.filter_by(course_id=course_id, user_id=user_id).first()
+                        if not existing:
+                            mandatory = MandatoryCourse(
+                                course_id=course_id,
+                                user_id=user_id,
+                                deadline=deadline,
+                                assigned_by=current_user.id
+                            )
+                            db.session.add(mandatory)
+                            total_assignments += 1
+                
+                db.session.commit()
+                flash(f'{len(form.course_ids.data)} course(s) set as mandatory for {len(form.user_ids.data)} user(s)! ({total_assignments} new assignments)', 'success')
             
             return redirect(url_for('admin_mandatory_courses'))
         
-        return render_template('admin/add_mandatory_course.html', title='Add Mandatory Course', form=form)
+        return render_template('admin/add_mandatory_course.html', title='Add Mandatory Courses', form=form)
     
     @app.route('/admin/mandatory-courses/<int:assignment_id>/delete', methods=['POST'])
     @login_required

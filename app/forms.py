@@ -149,11 +149,11 @@ class ApiKeyForm(FlaskForm):
 
 
 class MandatoryCourseForm(FlaskForm):
-    course_id = SelectField('Course', coerce=int, validators=[DataRequired()])
+    course_ids = SelectMultipleField('Courses', coerce=int, validators=[DataRequired()])
     assignment_type = SelectField('Assign To', choices=[
         ('all', 'All Users'),
         ('specific', 'Specific Users')
     ], validators=[DataRequired()])
     user_ids = SelectMultipleField('Select Users', coerce=int)
     deadline_days = IntegerField('Deadline (days from now)', default=30)
-    submit = SubmitField('Assign Mandatory Course')
+    submit = SubmitField('Assign Mandatory Courses')
