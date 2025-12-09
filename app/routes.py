@@ -459,7 +459,6 @@ def register_routes(app):
                     flash('Unable to send email. Please contact support.', 'danger')
             else:
                 flash('If that email exists, a reset code has been sent.', 'info')
-                return redirect(url_for('verify_reset_otp'))
         
         return render_template('auth/forgot_password.html', title='Forgot Password', form=form)
     
