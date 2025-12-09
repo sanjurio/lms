@@ -1117,11 +1117,13 @@ def register_routes(app):
 
         course = Course.query.get_or_404(course_id)
         lessons = Lesson.query.filter_by(course_id=course_id).order_by(Lesson.order).all()
+        assignments = Assignment.query.filter_by(course_id=course_id).all()
 
         return render_template('admin/lessons.html',
                                title=f'Manage Lessons for {course.title}',
                                course=course,
-                               lessons=lessons)
+                               lessons=lessons,
+                               assignments=assignments)
 
     @app.route('/admin/courses/<int:course_id>/lessons/add', methods=['GET', 'POST'])
     @login_required
