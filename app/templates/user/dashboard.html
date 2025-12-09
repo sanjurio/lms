@@ -213,14 +213,47 @@
                     {% if cp and cp.total > 0 %}
                     <div class="course-progress mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <small class="text-muted">Progress</small>
+                            <small class="text-muted">Lessons</small>
                             <small class="text-muted">{{ cp.completed }}/{{ cp.total }}</small>
                         </div>
                         <div class="progress" style="height: 8px;">
                             <div class="progress-bar {% if cp.percentage == 100 %}bg-success{% else %}bg-primary{% endif %}" role="progressbar" style="width: {{ cp.percentage }}%;"></div>
                         </div>
-                        {% if cp.percentage == 100 %}
-                        <small class="text-success"><i class="fas fa-check-circle me-1"></i>Completed!</small>
+                        
+                        {% if cp.assignment_required and cp.assignment_info %}
+                        <div class="assignment-status mt-2 p-2" style="background: rgba(255,255,255,0.05); border-radius: 6px;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-clipboard-check me-1"></i>{{ cp.assignment_info.title }}
+                                </small>
+                                {% if cp.assignment_passed %}
+                                <span class="badge bg-success" style="font-size: 0.7rem;">
+                                    <i class="fas fa-check me-1"></i>Passed
+                                </span>
+                                {% elif cp.assignment_info.best_score is not none %}
+                                <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">
+                                    <i class="fas fa-times me-1"></i>{{ cp.assignment_info.best_score }}%
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary" style="font-size: 0.7rem;">
+                                    <i class="fas fa-hourglass-half me-1"></i>Pending
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% if not cp.assignment_passed %}
+                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+                                Need {{ cp.assignment_info.passing_score }}% to pass
+                            </small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if cp.is_completed %}
+                        <div class="mt-2">
+                            <span class="badge bg-success"><i class="fas fa-trophy me-1"></i>Course Completed!</span>
+                        </div>
+                        {% elif cp.percentage == 100 and cp.assignment_required and not cp.assignment_passed %}
+                        <small class="text-warning d-block mt-1"><i class="fas fa-info-circle me-1"></i>Pass the assignment to complete</small>
                         {% endif %}
                     </div>
                     {% endif %}

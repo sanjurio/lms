@@ -1945,6 +1945,20 @@ def register_routes(app):
         flash('Assignment deleted successfully!', 'success')
         return redirect(url_for('admin_lessons', course_id=course_id))
     
+    @app.route('/admin/assignments/<int:assignment_id>/questions')
+    @login_required
+    def admin_manage_questions(assignment_id):
+        if not current_user.is_admin:
+            abort(403)
+        
+        assignment = Assignment.query.get_or_404(assignment_id)
+        questions = Question.query.filter_by(assignment_id=assignment_id).order_by(Question.order).all()
+        
+        return render_template('admin/manage_questions.html',
+                               title='Manage Questions',
+                               assignment=assignment,
+                               questions=questions)
+    
     @app.route('/admin/assignments/<int:assignment_id>/questions/add', methods=['GET', 'POST'])
     @login_required
     def admin_add_question(assignment_id):
