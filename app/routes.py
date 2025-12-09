@@ -1516,7 +1516,7 @@ def register_routes(app):
             
             if form.assignment_type.data == 'all':
                 # Assign selected courses to all users
-                for course_id in form.course_ids.data:
+                for course_id in (form.course_ids.data or []):
                     existing = MandatoryCourse.query.filter_by(course_id=course_id, user_id=None).first()
                     if existing:
                         skipped_courses += 1
@@ -1547,8 +1547,8 @@ def register_routes(app):
             else:
                 # Assign selected courses to specific users
                 total_assignments = 0
-                for course_id in form.course_ids.data:
-                    for user_id in form.user_ids.data:
+                for course_id in (form.course_ids.data or []):
+                    for user_id in (form.user_ids.data or []):
                         existing = MandatoryCourse.query.filter_by(course_id=course_id, user_id=user_id).first()
                         if not existing:
                             mandatory = MandatoryCourse(
@@ -1571,7 +1571,9 @@ def register_routes(app):
                                     ).delete()
                 
                 db.session.commit()
-                flash(f'{len(form.course_ids.data)} course(s) set as mandatory for {len(form.user_ids.data)} user(s)! ({total_assignments} new assignments)', 'success')
+                course_count = len(form.course_ids.data or [])
+                user_count = len(form.user_ids.data or [])
+                flash(f'{course_count} course(s) set as mandatory for {user_count} user(s)! ({total_assignments} new assignments)', 'success')
             
             return redirect(url_for('admin_mandatory_courses'))
         
@@ -1711,7 +1713,7 @@ def register_routes(app):
                 title=form.title.data,
                 description=form.description.data,
                 passing_score=form.passing_score.data,
-                time_limit_minutes=form.time_limit_minutes.data if form.time_limit_minutes.data > 0 else None,
+                time_limit_minutes=form.time_limit_minutes.data if form.time_limit_minutes.data and form.time_limit_minutes.data > 0 else None,
                 max_attempts=form.max_attempts.data,
                 is_active=form.is_active.data,
                 created_by=current_user.id
@@ -1739,7 +1741,7 @@ def register_routes(app):
             assignment.title = form.title.data
             assignment.description = form.description.data
             assignment.passing_score = form.passing_score.data
-            assignment.time_limit_minutes = form.time_limit_minutes.data if form.time_limit_minutes.data > 0 else None
+            assignment.time_limit_minutes = form.time_limit_minutes.data if form.time_limit_minutes.data and form.time_limit_minutes.data > 0 else None
             assignment.max_attempts = form.max_attempts.data
             assignment.is_active = form.is_active.data
             db.session.commit()
