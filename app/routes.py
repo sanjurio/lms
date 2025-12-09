@@ -1880,28 +1880,21 @@ def register_routes(app):
             abort(403)
         
         course = Course.query.get_or_404(course_id)
-        form = AssignmentForm()
         
-        if form.validate_on_submit():
-            assignment = Assignment(
-                course_id=course_id,
-                title=form.title.data,
-                description=form.description.data,
-                passing_score=form.passing_score.data,
-                time_limit_minutes=form.time_limit_minutes.data if form.time_limit_minutes.data and form.time_limit_minutes.data > 0 else None,
-                max_attempts=form.max_attempts.data,
-                is_active=form.is_active.data,
-                created_by=current_user.id
-            )
-            db.session.add(assignment)
-            db.session.commit()
-            flash(f'Assignment "{assignment.title}" created! Now add questions.', 'success')
-            return redirect(url_for('admin_edit_assignment', assignment_id=assignment.id))
-        
-        return render_template('admin/add_assignment.html',
-                               title='Add Assignment',
-                               form=form,
-                               course=course)
+        assignment = Assignment(
+            course_id=course_id,
+            title=f"New Assignment - {course.title}",
+            description="",
+            passing_score=70,
+            time_limit_minutes=None,
+            max_attempts=0,
+            is_active=False,
+            created_by=current_user.id
+        )
+        db.session.add(assignment)
+        db.session.commit()
+        flash('New assignment created! Please configure the settings and add questions.', 'info')
+        return redirect(url_for('admin_edit_assignment', assignment_id=assignment.id))
     
     @app.route('/admin/assignments/<int:assignment_id>/edit', methods=['GET', 'POST'])
     @login_required
