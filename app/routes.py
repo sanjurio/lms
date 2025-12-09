@@ -582,13 +582,26 @@ def register_routes(app):
         # Check if course is mandatory for this user
         is_mandatory = MandatoryCourse.is_mandatory_for_user(course_id, current_user.id)
 
+        # Get course assignment (final test)
+        course_assignment = Assignment.query.filter_by(course_id=course_id, is_active=True).first()
+        assignment_passed = False
+        assignment_score = None
+        if course_assignment:
+            best_score = course_assignment.get_best_score(current_user.id)
+            if best_score is not None:
+                assignment_score = best_score
+                assignment_passed = best_score >= course_assignment.passing_score
+
         return render_template('user/course.html',
                                title=course.title,
                                course=course,
                                lessons=lessons,
                                lesson_progress=lesson_progress,
                                course_progress=course_progress,
-                               is_mandatory=is_mandatory)
+                               is_mandatory=is_mandatory,
+                               course_assignment=course_assignment,
+                               assignment_passed=assignment_passed,
+                               assignment_score=assignment_score)
 
     @app.route('/lessons/<int:lesson_id>')
     @login_required

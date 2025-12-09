@@ -174,9 +174,6 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="section-title mb-0">Course Content</h2>
-        <a href="{{ url_for('course_assignments', course_id=course.id) }}" class="btn btn-outline-primary">
-            <i class="fas fa-tasks me-1"></i> View Assignments
-        </a>
     </div>
 
     {% if not lessons %}
@@ -216,6 +213,86 @@
                     {% endif %}
                 </a>
                 {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Final Assignment Section -->
+    {% if course_assignment %}
+    <div class="card mt-4" style="border: 2px solid {% if assignment_passed %}#198754{% else %}#6f42c1{% endif %};">
+        <div class="card-header" style="background: {% if assignment_passed %}linear-gradient(135deg, #198754, #20c997){% else %}linear-gradient(135deg, #6f42c1, #e83e8c){% endif %}; color: white;">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-{% if assignment_passed %}trophy{% else %}clipboard-check{% endif %} me-2"></i>
+                    Final Assessment: {{ course_assignment.title }}
+                </h4>
+                {% if assignment_passed %}
+                <span class="badge bg-light text-success fs-6">
+                    <i class="fas fa-check-circle me-1"></i> Passed
+                </span>
+                {% elif assignment_score is not none %}
+                <span class="badge bg-light text-danger fs-6">
+                    <i class="fas fa-times-circle me-1"></i> Not Passed ({{ assignment_score }}%)
+                </span>
+                {% else %}
+                <span class="badge bg-light text-dark fs-6">Not Attempted</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            {% if course_assignment.description %}
+            <p class="mb-3">{{ course_assignment.description }}</p>
+            {% endif %}
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-percentage text-primary me-2"></i>
+                        <span><strong>Passing Score:</strong> {{ course_assignment.passing_score }}%</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-question-circle text-info me-2"></i>
+                        <span><strong>Questions:</strong> {{ course_assignment.questions.count() }}</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-clock text-warning me-2"></i>
+                        <span><strong>Time Limit:</strong> {% if course_assignment.time_limit_minutes %}{{ course_assignment.time_limit_minutes }} min{% else %}No limit{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if assignment_passed %}
+            <div class="alert alert-success mb-3">
+                <i class="fas fa-trophy me-2"></i>
+                <strong>Congratulations!</strong> You have passed this assessment with a score of {{ assignment_score }}%. 
+                You have successfully completed this course!
+            </div>
+            {% elif course_progress.percentage < 100 %}
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                Complete all lessons before taking the final assessment.
+            </div>
+            {% endif %}
+
+            <div class="text-center">
+                {% if assignment_passed %}
+                <a href="{{ url_for('start_assignment', assignment_id=course_assignment.id) }}" class="btn btn-outline-success btn-lg">
+                    <i class="fas fa-redo me-2"></i> Retake Assessment
+                </a>
+                {% elif course_progress.percentage == 100 %}
+                <a href="{{ url_for('start_assignment', assignment_id=course_assignment.id) }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-play me-2"></i> Take Final Assessment
+                </a>
+                {% else %}
+                <button class="btn btn-secondary btn-lg" disabled>
+                    <i class="fas fa-lock me-2"></i> Complete All Lessons First
+                </button>
+                {% endif %}
             </div>
         </div>
     </div>
