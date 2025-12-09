@@ -119,7 +119,14 @@
         </div>
 
         <div class="course-header-content">
-            <h1 class="course-title">{{ course.title }}</h1>
+            <div class="d-flex justify-content-between align-items-start">
+                <h1 class="course-title">{{ course.title }}</h1>
+                {% if is_mandatory %}
+                <span class="badge bg-danger" style="font-size: 0.85rem; padding: 0.5rem 0.75rem;">
+                    <i class="fas fa-exclamation-circle me-1"></i>Mandatory Course
+                </span>
+                {% endif %}
+            </div>
 
             {% if course.is_thbs_restricted() %}
             <div class="alert alert-warning d-flex align-items-start mb-3">

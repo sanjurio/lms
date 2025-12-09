@@ -146,3 +146,14 @@ class ApiKeyForm(FlaskForm):
         Length(min=20, message='API key should be at least 20 characters long')
     ])
     submit = SubmitField('Save API Key')
+
+
+class MandatoryCourseForm(FlaskForm):
+    course_id = SelectField('Course', coerce=int, validators=[DataRequired()])
+    assignment_type = SelectField('Assign To', choices=[
+        ('all', 'All Users'),
+        ('specific', 'Specific Users')
+    ], validators=[DataRequired()])
+    user_ids = SelectMultipleField('Select Users', coerce=int)
+    deadline_days = IntegerField('Deadline (days from now)', default=30)
+    submit = SubmitField('Assign Mandatory Course')

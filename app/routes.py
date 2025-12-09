@@ -6,12 +6,14 @@ import io
 from . import db
 from .models import (User, Course, Lesson, Interest, UserInterest,
                     CourseInterest, UserCourse, ForumTopic, ForumReply,
-                    UserLessonProgress, UserNote, UserBookmark, UserActivity)
+                    UserLessonProgress, UserNote, UserBookmark, UserActivity,
+                    MandatoryCourse)
 from .forms import (LoginForm, RegistrationForm, TwoFactorForm,
                    SetupTwoFactorForm, InterestSelectionForm, UserApprovalForm,
                    CourseForm, LessonForm, InterestForm,
                    UserInterestAccessForm, ProfileForm, ForumTopicForm,
-                   ForumReplyForm)
+                   ForumReplyForm, MandatoryCourseForm)
+from datetime import timedelta
 from .utils.auth_helpers import generate_otp_secret, verify_totp, generate_qr_code
 from .utils.course_helpers import get_user_accessible_courses, get_recommended_courses, user_can_access_course, get_user_interests_status
 from .utils.admin_helpers import get_pending_users, approve_user, reject_user, grant_interest_access, revoke_interest_access, set_user_video_access
@@ -233,6 +235,12 @@ def register_routes(app):
                 'percentage': round((completed / total * 100) if total > 0 else 0)
             })
 
+        # Get mandatory course IDs for this user
+        mandatory_course_ids = set()
+        user_mandatory = MandatoryCourse.get_user_mandatory_courses(current_user.id)
+        for mc in user_mandatory:
+            mandatory_course_ids.add(mc.course_id)
+
         return render_template('user/dashboard.html',
                                title='Dashboard',
                                courses=available_courses,
@@ -242,7 +250,8 @@ def register_routes(app):
                                current_lesson=current_lesson,
                                recommended_courses=recommended_courses,
                                progress_stats=progress_stats,
-                               course_progress_list=course_progress_list)
+                               course_progress_list=course_progress_list,
+                               mandatory_course_ids=mandatory_course_ids)
 
     @app.route('/logout')
     @login_required
@@ -569,12 +578,16 @@ def register_routes(app):
             'percentage': round((completed_count / total_lessons * 100) if total_lessons > 0 else 0)
         }
 
+        # Check if course is mandatory for this user
+        is_mandatory = MandatoryCourse.is_mandatory_for_user(course_id, current_user.id)
+
         return render_template('user/course.html',
                                title=course.title,
                                course=course,
                                lessons=lessons,
                                lesson_progress=lesson_progress,
-                               course_progress=course_progress)
+                               course_progress=course_progress,
+                               is_mandatory=is_mandatory)
 
     @app.route('/lessons/<int:lesson_id>')
     @login_required
@@ -1452,3 +1465,178 @@ def register_routes(app):
         db.session.delete(note)
         db.session.commit()
         return jsonify({'success': True})
+
+    # ==================== MANDATORY COURSES ADMIN ROUTES ====================
+    
+    @app.route('/admin/mandatory-courses')
+    @login_required
+    def admin_mandatory_courses():
+        if not current_user.is_admin:
+            flash('You do not have permission to access the admin area.', 'danger')
+            return redirect(url_for('index'))
+        
+        # Get all mandatory course assignments
+        mandatory_assignments = MandatoryCourse.query.all()
+        
+        # Get stats for dashboard cards
+        stats = {
+            'pending_users_count': User.query.filter_by(is_approved=False, is_admin=False).count(),
+            'users_count': User.query.filter_by(is_admin=False).count(),
+            'courses_count': Course.query.count(),
+            'interests_count': Interest.query.count()
+        }
+        
+        return render_template('admin/mandatory_courses.html',
+                               title='Mandatory Courses',
+                               mandatory_assignments=mandatory_assignments,
+                               now=datetime.utcnow(),
+                               **stats)
+    
+    @app.route('/admin/mandatory-courses/add', methods=['GET', 'POST'])
+    @login_required
+    def admin_add_mandatory_course():
+        if not current_user.is_admin:
+            abort(403)
+        
+        form = MandatoryCourseForm()
+        courses = Course.query.all()
+        users = User.query.filter_by(is_admin=False, is_approved=True).all()
+        
+        form.course_id.choices = [(c.id, c.title) for c in courses]
+        form.user_ids.choices = [(u.id, f"{u.username} ({u.email})") for u in users]
+        
+        if form.validate_on_submit():
+            deadline = datetime.utcnow() + timedelta(days=form.deadline_days.data) if form.deadline_days.data else None
+            
+            if form.assignment_type.data == 'all':
+                # Check if already exists as global
+                existing = MandatoryCourse.query.filter_by(course_id=form.course_id.data, user_id=None).first()
+                if existing:
+                    flash('This course is already mandatory for all users.', 'warning')
+                else:
+                    mandatory = MandatoryCourse(
+                        course_id=form.course_id.data,
+                        user_id=None,
+                        deadline=deadline,
+                        assigned_by=current_user.id
+                    )
+                    db.session.add(mandatory)
+                    db.session.commit()
+                    flash('Course set as mandatory for all users!', 'success')
+            else:
+                # Assign to specific users
+                added_count = 0
+                for user_id in form.user_ids.data:
+                    existing = MandatoryCourse.query.filter_by(course_id=form.course_id.data, user_id=user_id).first()
+                    if not existing:
+                        mandatory = MandatoryCourse(
+                            course_id=form.course_id.data,
+                            user_id=user_id,
+                            deadline=deadline,
+                            assigned_by=current_user.id
+                        )
+                        db.session.add(mandatory)
+                        added_count += 1
+                
+                db.session.commit()
+                flash(f'Course set as mandatory for {added_count} users!', 'success')
+            
+            return redirect(url_for('admin_mandatory_courses'))
+        
+        return render_template('admin/add_mandatory_course.html', title='Add Mandatory Course', form=form)
+    
+    @app.route('/admin/mandatory-courses/<int:assignment_id>/delete', methods=['POST'])
+    @login_required
+    def admin_delete_mandatory_course(assignment_id):
+        if not current_user.is_admin:
+            abort(403)
+        
+        assignment = MandatoryCourse.query.get_or_404(assignment_id)
+        db.session.delete(assignment)
+        db.session.commit()
+        flash('Mandatory course assignment removed successfully!', 'success')
+        return redirect(url_for('admin_mandatory_courses'))
+    
+    @app.route('/admin/mandatory-courses/completion')
+    @login_required
+    def admin_mandatory_completion():
+        if not current_user.is_admin:
+            flash('You do not have permission to access the admin area.', 'danger')
+            return redirect(url_for('index'))
+        
+        # Get all mandatory courses
+        mandatory_courses = MandatoryCourse.query.all()
+        
+        # Build completion data
+        completion_data = []
+        
+        # Get unique course IDs from mandatory assignments
+        course_ids = set()
+        for mc in mandatory_courses:
+            course_ids.add(mc.course_id)
+        
+        for course_id in course_ids:
+            course = Course.query.get(course_id)
+            if not course:
+                continue
+            
+            # Get lessons in this course
+            lessons = Lesson.query.filter_by(course_id=course_id).all()
+            total_lessons = len(lessons)
+            
+            # Check if mandatory for all or specific users
+            global_mandatory = MandatoryCourse.query.filter_by(course_id=course_id, user_id=None).first()
+            specific_mandatories = MandatoryCourse.query.filter(
+                MandatoryCourse.course_id == course_id,
+                MandatoryCourse.user_id != None
+            ).all()
+            
+            # Get users who must complete this course
+            if global_mandatory:
+                target_users = User.query.filter_by(is_admin=False, is_approved=True).all()
+                deadline = global_mandatory.deadline
+            else:
+                target_user_ids = [m.user_id for m in specific_mandatories]
+                target_users = User.query.filter(User.id.in_(target_user_ids)).all()
+                deadline = specific_mandatories[0].deadline if specific_mandatories else None
+            
+            user_completions = []
+            for user in target_users:
+                # Count completed lessons for this user in this course
+                completed_count = UserLessonProgress.query.filter(
+                    UserLessonProgress.user_id == user.id,
+                    UserLessonProgress.lesson_id.in_([l.id for l in lessons]),
+                    UserLessonProgress.status == 'completed'
+                ).count() if lessons else 0
+                
+                is_completed = completed_count == total_lessons and total_lessons > 0
+                
+                user_completions.append({
+                    'user': user,
+                    'completed_lessons': completed_count,
+                    'total_lessons': total_lessons,
+                    'is_completed': is_completed,
+                    'completion_percentage': (completed_count / total_lessons * 100) if total_lessons > 0 else 0
+                })
+            
+            completion_data.append({
+                'course': course,
+                'is_global': global_mandatory is not None,
+                'deadline': deadline,
+                'user_completions': user_completions,
+                'total_users': len(target_users),
+                'completed_users': sum(1 for uc in user_completions if uc['is_completed'])
+            })
+        
+        # Get stats for dashboard cards
+        stats = {
+            'pending_users_count': User.query.filter_by(is_approved=False, is_admin=False).count(),
+            'users_count': User.query.filter_by(is_admin=False).count(),
+            'courses_count': Course.query.count(),
+            'interests_count': Interest.query.count()
+        }
+        
+        return render_template('admin/mandatory_completion.html',
+                               title='Mandatory Course Completion',
+                               completion_data=completion_data,
+                               **stats)

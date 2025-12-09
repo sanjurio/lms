@@ -358,3 +358,56 @@ class UserActivity(db.Model):
     
     def __repr__(self):
         return f'<UserActivity {self.activity_type} by user {self.user_id}>'
+
+
+class MandatoryCourse(db.Model):
+    """Track mandatory course assignments - for all users or specific users"""
+    __tablename__ = 'mandatory_courses'
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # NULL means mandatory for all users
+    deadline = db.Column(db.DateTime, nullable=True)  # Optional deadline (default 1 month from assignment)
+    assigned_at = db.Column(db.DateTime, default=datetime.utcnow)
+    assigned_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Relationships
+    course = db.relationship('Course', backref=db.backref('mandatory_assignments', lazy='dynamic'), foreign_keys=[course_id])
+    user = db.relationship('User', backref=db.backref('mandatory_courses', lazy='dynamic'), foreign_keys=[user_id])
+    assigner = db.relationship('User', foreign_keys=[assigned_by])
+    
+    def __repr__(self):
+        if self.user_id:
+            return f'<MandatoryCourse course_id={self.course_id} user_id={self.user_id}>'
+        return f'<MandatoryCourse course_id={self.course_id} for_all_users=True>'
+    
+    @staticmethod
+    def is_mandatory_for_user(course_id, user_id):
+        """Check if a course is mandatory for a specific user"""
+        # Check if mandatory for all users
+        global_mandatory = MandatoryCourse.query.filter_by(course_id=course_id, user_id=None).first()
+        if global_mandatory:
+            return True
+        # Check if mandatory for this specific user
+        user_mandatory = MandatoryCourse.query.filter_by(course_id=course_id, user_id=user_id).first()
+        return user_mandatory is not None
+    
+    @staticmethod
+    def get_user_mandatory_courses(user_id):
+        """Get all mandatory courses for a user (both global and user-specific)"""
+        from sqlalchemy import or_
+        return MandatoryCourse.query.filter(
+            or_(MandatoryCourse.user_id == None, MandatoryCourse.user_id == user_id)
+        ).all()
+    
+    @staticmethod
+    def get_deadline_for_user(course_id, user_id):
+        """Get the deadline for a mandatory course for a specific user"""
+        # First check user-specific assignment
+        user_mandatory = MandatoryCourse.query.filter_by(course_id=course_id, user_id=user_id).first()
+        if user_mandatory:
+            return user_mandatory.deadline
+        # Then check global assignment
+        global_mandatory = MandatoryCourse.query.filter_by(course_id=course_id, user_id=None).first()
+        if global_mandatory:
+            return global_mandatory.deadline
+        return None
