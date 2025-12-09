@@ -517,3 +517,30 @@ class UserAssignmentAttempt(db.Model):
     def is_passed(self):
         """Check if this attempt passed"""
         return self.score >= self.assignment.passing_score if self.completed_at else False
+
+
+class PasswordResetToken(db.Model):
+    """Store password reset OTP tokens"""
+    __tablename__ = 'password_reset_tokens'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    otp_code = db.Column(db.String(6), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False)
+    
+    # Relationship
+    user = db.relationship('User', backref=db.backref('reset_tokens', lazy='dynamic'))
+    
+    def __repr__(self):
+        return f'<PasswordResetToken user_id={self.user_id}>'
+    
+    def is_valid(self):
+        """Check if the token is still valid"""
+        return not self.used and datetime.utcnow() < self.expires_at
+    
+    @staticmethod
+    def generate_otp():
+        """Generate a 6-digit OTP"""
+        import random
+        return ''.join([str(random.randint(0, 9)) for _ in range(6)])

@@ -185,3 +185,30 @@ class QuestionForm(FlaskForm):
     explanation = TextAreaField('Explanation (optional)')
     points = IntegerField('Points', default=1, validators=[DataRequired()])
     submit = SubmitField('Save Question')
+
+
+class ForgotPasswordForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('Send Reset Code')
+
+
+class VerifyOTPForm(FlaskForm):
+    otp = StringField('Verification Code', validators=[
+        DataRequired(),
+        Length(min=6, max=6, message='Code must be 6 digits'),
+        Regexp('^\d{6}$', message='Code must be 6 digits')
+    ])
+    submit = SubmitField('Verify Code')
+
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField('New Password', validators=[
+        DataRequired(),
+        Length(min=8, message='Password must be at least 8 characters long'),
+        Regexp('(?=.*\d)(?=.*[a-z])(?=.*[A-Z])', message='Password must include at least one uppercase letter, one lowercase letter, and one number')
+    ])
+    password2 = PasswordField('Confirm New Password', validators=[
+        DataRequired(), 
+        EqualTo('password', message='Passwords must match')
+    ])
+    submit = SubmitField('Reset Password')

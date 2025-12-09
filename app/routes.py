@@ -8,12 +8,14 @@ from . import db
 from .models import (User, Course, Lesson, Interest, UserInterest,
                     CourseInterest, UserCourse, ForumTopic, ForumReply,
                     UserLessonProgress, UserNote, UserBookmark, UserActivity,
-                    MandatoryCourse, Assignment, Question, UserAssignmentAttempt)
+                    MandatoryCourse, Assignment, Question, UserAssignmentAttempt,
+                    PasswordResetToken)
 from .forms import (LoginForm, RegistrationForm, TwoFactorForm,
                    SetupTwoFactorForm, InterestSelectionForm, UserApprovalForm,
                    CourseForm, LessonForm, InterestForm,
                    UserInterestAccessForm, ProfileForm, ForumTopicForm,
-                   ForumReplyForm, MandatoryCourseForm, AssignmentForm, QuestionForm)
+                   ForumReplyForm, MandatoryCourseForm, AssignmentForm, QuestionForm,
+                   ForgotPasswordForm, VerifyOTPForm, ResetPasswordForm)
 from datetime import timedelta
 from .utils.auth_helpers import generate_otp_secret, verify_totp, generate_qr_code
 from .utils.course_helpers import get_user_accessible_courses, get_recommended_courses, user_can_access_course, get_user_interests_status
@@ -220,20 +222,54 @@ def register_routes(app):
         course_progress_list = []
         for course in available_courses:
             lessons = Lesson.query.filter_by(course_id=course.id).all()
-            completed = 0
-            total = len(lessons)
+            completed_lessons = 0
+            total_lessons = len(lessons)
             for lesson in lessons:
                 progress = UserLessonProgress.query.filter_by(
                     user_id=current_user.id,
                     lesson_id=lesson.id
                 ).first()
                 if progress and progress.status == 'completed':
-                    completed += 1
+                    completed_lessons += 1
+            
+            lessons_percentage = round((completed_lessons / total_lessons * 100) if total_lessons > 0 else 0)
+            
+            assignments = Assignment.query.filter_by(course_id=course.id, is_active=True).all()
+            assignment_passed = False
+            assignment_required = len(assignments) > 0
+            assignment_info = None
+            
+            if assignments:
+                for assignment in assignments:
+                    if assignment.user_has_passed(current_user.id):
+                        assignment_passed = True
+                        break
+                
+                if assignments:
+                    best_assignment = assignments[0]
+                    best_score = best_assignment.get_best_score(current_user.id)
+                    assignment_info = {
+                        'title': best_assignment.title,
+                        'passing_score': best_assignment.passing_score,
+                        'best_score': best_score,
+                        'passed': assignment_passed
+                    }
+            
+            is_course_completed = False
+            if assignment_required:
+                is_course_completed = assignment_passed
+            else:
+                is_course_completed = (lessons_percentage == 100)
+            
             course_progress_list.append({
                 'course_id': course.id,
-                'completed': completed,
-                'total': total,
-                'percentage': round((completed / total * 100) if total > 0 else 0)
+                'completed': completed_lessons,
+                'total': total_lessons,
+                'percentage': lessons_percentage,
+                'assignment_required': assignment_required,
+                'assignment_passed': assignment_passed,
+                'assignment_info': assignment_info,
+                'is_completed': is_course_completed
             })
 
         # Get mandatory course IDs for this user
@@ -389,6 +425,105 @@ def register_routes(app):
                                qr_code=qr_code,
                                username=user.username,
                                secret=user.otp_secret)
+
+    @app.route('/forgot-password', methods=['GET', 'POST'])
+    def forgot_password():
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+        
+        form = ForgotPasswordForm()
+        if form.validate_on_submit():
+            user = User.query.filter_by(email=form.email.data).first()
+            if user:
+                otp_code = PasswordResetToken.generate_otp()
+                expires_at = datetime.utcnow() + timedelta(minutes=10)
+                
+                PasswordResetToken.query.filter_by(user_id=user.id, used=False).update({'used': True})
+                
+                reset_token = PasswordResetToken(
+                    user_id=user.id,
+                    otp_code=otp_code,
+                    expires_at=expires_at
+                )
+                db.session.add(reset_token)
+                db.session.commit()
+                
+                from .utils.email_helpers import send_password_reset_email
+                email_sent = send_password_reset_email(user.email, otp_code, user.username)
+                
+                if email_sent:
+                    session['reset_email'] = user.email
+                    flash('A verification code has been sent to your email.', 'success')
+                    return redirect(url_for('verify_reset_otp'))
+                else:
+                    flash('Unable to send email. Please contact support.', 'danger')
+            else:
+                flash('If that email exists, a reset code has been sent.', 'info')
+                return redirect(url_for('verify_reset_otp'))
+        
+        return render_template('auth/forgot_password.html', title='Forgot Password', form=form)
+    
+    @app.route('/verify-reset-otp', methods=['GET', 'POST'])
+    def verify_reset_otp():
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+        
+        email = session.get('reset_email')
+        if not email:
+            flash('Please request a password reset first.', 'warning')
+            return redirect(url_for('forgot_password'))
+        
+        form = VerifyOTPForm()
+        if form.validate_on_submit():
+            user = User.query.filter_by(email=email).first()
+            if user:
+                token = PasswordResetToken.query.filter_by(
+                    user_id=user.id,
+                    otp_code=form.otp.data,
+                    used=False
+                ).first()
+                
+                if token and token.is_valid():
+                    session['reset_token_id'] = token.id
+                    return redirect(url_for('reset_password'))
+                else:
+                    flash('Invalid or expired verification code.', 'danger')
+            else:
+                flash('Invalid request.', 'danger')
+        
+        return render_template('auth/verify_otp.html', title='Verify Code', form=form, email=email)
+    
+    @app.route('/reset-password', methods=['GET', 'POST'])
+    def reset_password():
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+        
+        token_id = session.get('reset_token_id')
+        if not token_id:
+            flash('Please verify your code first.', 'warning')
+            return redirect(url_for('forgot_password'))
+        
+        token = PasswordResetToken.query.get(token_id)
+        if not token or not token.is_valid():
+            session.pop('reset_token_id', None)
+            session.pop('reset_email', None)
+            flash('Session expired. Please request a new reset code.', 'warning')
+            return redirect(url_for('forgot_password'))
+        
+        form = ResetPasswordForm()
+        if form.validate_on_submit():
+            user = token.user
+            user.set_password(form.password.data)
+            token.used = True
+            db.session.commit()
+            
+            session.pop('reset_token_id', None)
+            session.pop('reset_email', None)
+            
+            flash('Your password has been reset successfully. You can now log in.', 'success')
+            return redirect(url_for('login'))
+        
+        return render_template('auth/reset_password.html', title='Reset Password', form=form)
 
     @app.route('/forum')
     def forum_index():
