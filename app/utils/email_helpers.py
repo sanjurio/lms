@@ -17,7 +17,10 @@ def send_password_reset_email(to_email, otp_code, username):
     
     if not smtp_user or not smtp_password:
         logger.error("SMTP credentials not configured")
+        print(f"SMTP_USER exists: {bool(smtp_user)}, SMTP_PASSWORD exists: {bool(smtp_password)}")
         return False
+    
+    logger.info(f"Attempting to send email via {smtp_host}:{smtp_port} from {smtp_user}")
     
     subject = "Erlang LMS - Password Reset Code"
     
@@ -95,4 +98,5 @@ def send_password_reset_email(to_email, otp_code, username):
         return True
     except Exception as e:
         logger.error(f"Failed to send password reset email: {e}")
+        print(f"SMTP ERROR: {type(e).__name__}: {e}")
         return False
