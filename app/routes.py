@@ -941,9 +941,37 @@ def register_routes(app):
             abort(403)
 
         course = Course.query.get_or_404(course_id)
-        db.session.delete(course)
-        db.session.commit()
-        flash('Course deleted successfully!', 'success')
+        
+        try:
+            # Delete related records that don't have cascade delete set up
+            # Delete course interests
+            CourseInterest.query.filter_by(course_id=course_id).delete()
+            
+            # Delete user course enrollments
+            UserCourse.query.filter_by(course_id=course_id).delete()
+            
+            # Delete mandatory course assignments
+            MandatoryCourse.query.filter_by(course_id=course_id).delete()
+            
+            # Delete user activities related to this course
+            UserActivity.query.filter_by(course_id=course_id).delete()
+            
+            # Get all assignments for this course and delete their attempts first
+            assignments = Assignment.query.filter_by(course_id=course_id).all()
+            for assignment in assignments:
+                UserAssignmentAttempt.query.filter_by(assignment_id=assignment.id).delete()
+            
+            # Delete assignments (questions cascade automatically)
+            Assignment.query.filter_by(course_id=course_id).delete()
+            
+            # Now delete the course (lessons, forum_topics cascade automatically)
+            db.session.delete(course)
+            db.session.commit()
+            flash('Course deleted successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error deleting course: {str(e)}', 'danger')
+        
         return redirect(url_for('admin_courses'))
 
     # Admin lesson management routes

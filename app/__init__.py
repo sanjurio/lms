@@ -74,6 +74,23 @@ def create_app():
         routes.register_routes(app)
         logger.debug("Routes imported successfully")
         
+        # Create default admin user if it doesn't exist
+        from .models import User
+        from werkzeug.security import generate_password_hash
+        admin = User.query.filter_by(email='admin@example.com').first()
+        if not admin:
+            admin = User(
+                username='admin',
+                email='admin@example.com',
+                password_hash=generate_password_hash("Admin123"),
+                is_admin=True,
+                is_approved=True,
+                is_2fa_enabled=False
+            )
+            db.session.add(admin)
+            db.session.commit()
+            logger.info("Default admin user created (admin@example.com / Admin123)")
+        
         # Register context processors
         register_context_processors(app)
 

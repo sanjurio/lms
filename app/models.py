@@ -173,9 +173,9 @@ class Course(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     
-    # Relationships
+    # Relationships with proper cascade delete
     lessons = db.relationship('Lesson', backref='course', lazy='dynamic', cascade='all, delete-orphan')
-    forum_topics = db.relationship('ForumTopic', backref='course', lazy='dynamic')
+    forum_topics = db.relationship('ForumTopic', backref='course', lazy='dynamic', cascade='all, delete-orphan')
     
     def is_thbs_restricted(self):
         """Check if this course is restricted to THBS domain users only"""
