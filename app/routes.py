@@ -1767,7 +1767,7 @@ def register_routes(app):
         db.session.delete(assignment)
         db.session.commit()
         flash('Assignment deleted successfully!', 'success')
-        return redirect(url_for('admin_course_content', course_id=course_id))
+        return redirect(url_for('admin_lessons', course_id=course_id))
     
     @app.route('/admin/assignments/<int:assignment_id>/questions/add', methods=['GET', 'POST'])
     @login_required
