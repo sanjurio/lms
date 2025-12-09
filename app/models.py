@@ -369,6 +369,7 @@ class MandatoryCourse(db.Model):
     deadline = db.Column(db.DateTime, nullable=True)  # Optional deadline (default 1 month from assignment)
     assigned_at = db.Column(db.DateTime, default=datetime.utcnow)
     assigned_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    requires_redo = db.Column(db.Boolean, default=False)  # If True, user must redo the course even if completed
     
     # Relationships
     course = db.relationship('Course', backref=db.backref('mandatory_assignments', lazy='dynamic'), foreign_keys=[course_id])
@@ -411,3 +412,108 @@ class MandatoryCourse(db.Model):
         if global_mandatory:
             return global_mandatory.deadline
         return None
+
+
+class Assignment(db.Model):
+    """Course assignments with MCQ questions"""
+    __tablename__ = 'assignments'
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    passing_score = db.Column(db.Integer, default=70)  # Percentage required to pass
+    time_limit_minutes = db.Column(db.Integer, nullable=True)  # Optional time limit
+    max_attempts = db.Column(db.Integer, default=0)  # 0 means unlimited attempts
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Relationships
+    course = db.relationship('Course', backref=db.backref('assignments', lazy='dynamic'))
+    creator = db.relationship('User', foreign_keys=[created_by])
+    questions = db.relationship('Question', backref='assignment', lazy='dynamic', cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<Assignment {self.title}>'
+    
+    def get_user_attempts(self, user_id):
+        """Get all attempts for a specific user"""
+        return UserAssignmentAttempt.query.filter_by(
+            assignment_id=self.id,
+            user_id=user_id
+        ).order_by(UserAssignmentAttempt.started_at.desc()).all()
+    
+    def get_best_score(self, user_id):
+        """Get the best score for a user"""
+        attempts = self.get_user_attempts(user_id)
+        if not attempts:
+            return None
+        completed = [a for a in attempts if a.completed_at]
+        if not completed:
+            return None
+        return max(a.score for a in completed)
+    
+    def user_has_passed(self, user_id):
+        """Check if user has passed this assignment"""
+        best_score = self.get_best_score(user_id)
+        if best_score is None:
+            return False
+        return best_score >= self.passing_score
+
+
+class Question(db.Model):
+    """MCQ questions for assignments"""
+    __tablename__ = 'questions'
+    id = db.Column(db.Integer, primary_key=True)
+    assignment_id = db.Column(db.Integer, db.ForeignKey('assignments.id'), nullable=False)
+    question_text = db.Column(db.Text, nullable=False)
+    option_a = db.Column(db.String(500), nullable=False)
+    option_b = db.Column(db.String(500), nullable=False)
+    option_c = db.Column(db.String(500), nullable=True)
+    option_d = db.Column(db.String(500), nullable=True)
+    correct_answer = db.Column(db.String(1), nullable=False)  # 'A', 'B', 'C', or 'D'
+    explanation = db.Column(db.Text)  # Optional explanation for the correct answer
+    points = db.Column(db.Integer, default=1)
+    order = db.Column(db.Integer, default=0)
+    
+    def __repr__(self):
+        return f'<Question {self.id} for Assignment {self.assignment_id}>'
+    
+    def get_options(self):
+        """Get all options as a list"""
+        options = [
+            ('A', self.option_a),
+            ('B', self.option_b),
+        ]
+        if self.option_c:
+            options.append(('C', self.option_c))
+        if self.option_d:
+            options.append(('D', self.option_d))
+        return options
+    
+    def is_correct(self, answer):
+        """Check if the given answer is correct"""
+        return answer.upper() == self.correct_answer.upper()
+
+
+class UserAssignmentAttempt(db.Model):
+    """Track user attempts on assignments"""
+    __tablename__ = 'user_assignment_attempts'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    assignment_id = db.Column(db.Integer, db.ForeignKey('assignments.id'), nullable=False)
+    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    score = db.Column(db.Integer, default=0)  # Percentage score
+    answers = db.Column(db.Text)  # JSON string of answers: {"question_id": "answer"}
+    
+    # Relationships
+    user = db.relationship('User', backref=db.backref('assignment_attempts', lazy='dynamic'))
+    assignment = db.relationship('Assignment', backref=db.backref('attempts', lazy='dynamic'))
+    
+    def __repr__(self):
+        return f'<UserAssignmentAttempt user={self.user_id} assignment={self.assignment_id}>'
+    
+    def is_passed(self):
+        """Check if this attempt passed"""
+        return self.score >= self.assignment.passing_score if self.completed_at else False

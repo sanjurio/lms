@@ -156,4 +156,32 @@ class MandatoryCourseForm(FlaskForm):
     ], validators=[DataRequired()])
     user_ids = SelectMultipleField('Select Users', coerce=int)
     deadline_days = IntegerField('Deadline (days from now)', default=30)
+    requires_redo = BooleanField('Require Redo (reset user progress for this course)')
     submit = SubmitField('Assign Mandatory Courses')
+
+
+class AssignmentForm(FlaskForm):
+    title = StringField('Assignment Title', validators=[DataRequired(), Length(min=3, max=200)])
+    description = TextAreaField('Description')
+    passing_score = IntegerField('Passing Score (%)', default=70)
+    time_limit_minutes = IntegerField('Time Limit (minutes)', default=0)
+    max_attempts = IntegerField('Max Attempts (0 = unlimited)', default=0)
+    is_active = BooleanField('Active', default=True)
+    submit = SubmitField('Save Assignment')
+
+
+class QuestionForm(FlaskForm):
+    question_text = TextAreaField('Question', validators=[DataRequired()])
+    option_a = StringField('Option A', validators=[DataRequired(), Length(max=500)])
+    option_b = StringField('Option B', validators=[DataRequired(), Length(max=500)])
+    option_c = StringField('Option C', validators=[Length(max=500)])
+    option_d = StringField('Option D', validators=[Length(max=500)])
+    correct_answer = SelectField('Correct Answer', choices=[
+        ('A', 'A'),
+        ('B', 'B'),
+        ('C', 'C'),
+        ('D', 'D')
+    ], validators=[DataRequired()])
+    explanation = TextAreaField('Explanation (optional)')
+    points = IntegerField('Points', default=1, validators=[DataRequired()])
+    submit = SubmitField('Save Question')

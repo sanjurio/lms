@@ -3,16 +3,17 @@ from flask_login import login_user, logout_user, current_user, login_required
 from urllib.parse import urlparse
 import os
 import io
+import json
 from . import db
 from .models import (User, Course, Lesson, Interest, UserInterest,
                     CourseInterest, UserCourse, ForumTopic, ForumReply,
                     UserLessonProgress, UserNote, UserBookmark, UserActivity,
-                    MandatoryCourse)
+                    MandatoryCourse, Assignment, Question, UserAssignmentAttempt)
 from .forms import (LoginForm, RegistrationForm, TwoFactorForm,
                    SetupTwoFactorForm, InterestSelectionForm, UserApprovalForm,
                    CourseForm, LessonForm, InterestForm,
                    UserInterestAccessForm, ProfileForm, ForumTopicForm,
-                   ForumReplyForm, MandatoryCourseForm)
+                   ForumReplyForm, MandatoryCourseForm, AssignmentForm, QuestionForm)
 from datetime import timedelta
 from .utils.auth_helpers import generate_otp_secret, verify_totp, generate_qr_code
 from .utils.course_helpers import get_user_accessible_courses, get_recommended_courses, user_can_access_course, get_user_interests_status
@@ -1511,6 +1512,8 @@ def register_routes(app):
             added_courses = 0
             skipped_courses = 0
             
+            requires_redo = form.requires_redo.data
+            
             if form.assignment_type.data == 'all':
                 # Assign selected courses to all users
                 for course_id in form.course_ids.data:
@@ -1522,10 +1525,19 @@ def register_routes(app):
                             course_id=course_id,
                             user_id=None,
                             deadline=deadline,
-                            assigned_by=current_user.id
+                            assigned_by=current_user.id,
+                            requires_redo=requires_redo
                         )
                         db.session.add(mandatory)
                         added_courses += 1
+                        
+                        # If requires_redo, reset progress for all users
+                        if requires_redo:
+                            course = Course.query.get(course_id)
+                            if course:
+                                lessons = Lesson.query.filter_by(course_id=course_id).all()
+                                for lesson in lessons:
+                                    UserLessonProgress.query.filter_by(lesson_id=lesson.id).delete()
                 
                 db.session.commit()
                 if added_courses > 0:
@@ -1543,10 +1555,20 @@ def register_routes(app):
                                 course_id=course_id,
                                 user_id=user_id,
                                 deadline=deadline,
-                                assigned_by=current_user.id
+                                assigned_by=current_user.id,
+                                requires_redo=requires_redo
                             )
                             db.session.add(mandatory)
                             total_assignments += 1
+                            
+                            # If requires_redo, reset progress for this user
+                            if requires_redo:
+                                lessons = Lesson.query.filter_by(course_id=course_id).all()
+                                for lesson in lessons:
+                                    UserLessonProgress.query.filter_by(
+                                        lesson_id=lesson.id,
+                                        user_id=user_id
+                                    ).delete()
                 
                 db.session.commit()
                 flash(f'{len(form.course_ids.data)} course(s) set as mandatory for {len(form.user_ids.data)} user(s)! ({total_assignments} new assignments)', 'success')
@@ -1650,3 +1672,310 @@ def register_routes(app):
                                title='Mandatory Course Completion',
                                completion_data=completion_data,
                                **stats)
+    
+    # ==================== ASSIGNMENTS ADMIN ROUTES ====================
+    
+    @app.route('/admin/assignments')
+    @login_required
+    def admin_assignments():
+        if not current_user.is_admin:
+            flash('You do not have permission to access the admin area.', 'danger')
+            return redirect(url_for('index'))
+        
+        assignments = Assignment.query.order_by(Assignment.created_at.desc()).all()
+        
+        stats = {
+            'pending_users_count': User.query.filter_by(is_approved=False, is_admin=False).count(),
+            'users_count': User.query.filter_by(is_admin=False).count(),
+            'courses_count': Course.query.count(),
+            'interests_count': Interest.query.count()
+        }
+        
+        return render_template('admin/assignments.html',
+                               title='Assignments',
+                               assignments=assignments,
+                               **stats)
+    
+    @app.route('/admin/courses/<int:course_id>/assignments/add', methods=['GET', 'POST'])
+    @login_required
+    def admin_add_assignment(course_id):
+        if not current_user.is_admin:
+            abort(403)
+        
+        course = Course.query.get_or_404(course_id)
+        form = AssignmentForm()
+        
+        if form.validate_on_submit():
+            assignment = Assignment(
+                course_id=course_id,
+                title=form.title.data,
+                description=form.description.data,
+                passing_score=form.passing_score.data,
+                time_limit_minutes=form.time_limit_minutes.data if form.time_limit_minutes.data > 0 else None,
+                max_attempts=form.max_attempts.data,
+                is_active=form.is_active.data,
+                created_by=current_user.id
+            )
+            db.session.add(assignment)
+            db.session.commit()
+            flash(f'Assignment "{assignment.title}" created! Now add questions.', 'success')
+            return redirect(url_for('admin_edit_assignment', assignment_id=assignment.id))
+        
+        return render_template('admin/add_assignment.html',
+                               title='Add Assignment',
+                               form=form,
+                               course=course)
+    
+    @app.route('/admin/assignments/<int:assignment_id>/edit', methods=['GET', 'POST'])
+    @login_required
+    def admin_edit_assignment(assignment_id):
+        if not current_user.is_admin:
+            abort(403)
+        
+        assignment = Assignment.query.get_or_404(assignment_id)
+        form = AssignmentForm(obj=assignment)
+        
+        if form.validate_on_submit():
+            assignment.title = form.title.data
+            assignment.description = form.description.data
+            assignment.passing_score = form.passing_score.data
+            assignment.time_limit_minutes = form.time_limit_minutes.data if form.time_limit_minutes.data > 0 else None
+            assignment.max_attempts = form.max_attempts.data
+            assignment.is_active = form.is_active.data
+            db.session.commit()
+            flash('Assignment updated successfully!', 'success')
+            return redirect(url_for('admin_edit_assignment', assignment_id=assignment.id))
+        
+        questions = Question.query.filter_by(assignment_id=assignment_id).order_by(Question.order).all()
+        
+        return render_template('admin/edit_assignment.html',
+                               title='Edit Assignment',
+                               form=form,
+                               assignment=assignment,
+                               questions=questions)
+    
+    @app.route('/admin/assignments/<int:assignment_id>/delete', methods=['POST'])
+    @login_required
+    def admin_delete_assignment(assignment_id):
+        if not current_user.is_admin:
+            abort(403)
+        
+        assignment = Assignment.query.get_or_404(assignment_id)
+        course_id = assignment.course_id
+        db.session.delete(assignment)
+        db.session.commit()
+        flash('Assignment deleted successfully!', 'success')
+        return redirect(url_for('admin_course_content', course_id=course_id))
+    
+    @app.route('/admin/assignments/<int:assignment_id>/questions/add', methods=['GET', 'POST'])
+    @login_required
+    def admin_add_question(assignment_id):
+        if not current_user.is_admin:
+            abort(403)
+        
+        assignment = Assignment.query.get_or_404(assignment_id)
+        form = QuestionForm()
+        
+        if form.validate_on_submit():
+            max_order = db.session.query(db.func.max(Question.order)).filter_by(assignment_id=assignment_id).scalar() or 0
+            
+            question = Question(
+                assignment_id=assignment_id,
+                question_text=form.question_text.data,
+                option_a=form.option_a.data,
+                option_b=form.option_b.data,
+                option_c=form.option_c.data if form.option_c.data else None,
+                option_d=form.option_d.data if form.option_d.data else None,
+                correct_answer=form.correct_answer.data,
+                explanation=form.explanation.data,
+                points=form.points.data,
+                order=max_order + 1
+            )
+            db.session.add(question)
+            db.session.commit()
+            flash('Question added successfully!', 'success')
+            return redirect(url_for('admin_edit_assignment', assignment_id=assignment_id))
+        
+        return render_template('admin/add_question.html',
+                               title='Add Question',
+                               form=form,
+                               assignment=assignment)
+    
+    @app.route('/admin/questions/<int:question_id>/edit', methods=['GET', 'POST'])
+    @login_required
+    def admin_edit_question(question_id):
+        if not current_user.is_admin:
+            abort(403)
+        
+        question = Question.query.get_or_404(question_id)
+        form = QuestionForm(obj=question)
+        
+        if form.validate_on_submit():
+            question.question_text = form.question_text.data
+            question.option_a = form.option_a.data
+            question.option_b = form.option_b.data
+            question.option_c = form.option_c.data if form.option_c.data else None
+            question.option_d = form.option_d.data if form.option_d.data else None
+            question.correct_answer = form.correct_answer.data
+            question.explanation = form.explanation.data
+            question.points = form.points.data
+            db.session.commit()
+            flash('Question updated successfully!', 'success')
+            return redirect(url_for('admin_edit_assignment', assignment_id=question.assignment_id))
+        
+        return render_template('admin/edit_question.html',
+                               title='Edit Question',
+                               form=form,
+                               question=question)
+    
+    @app.route('/admin/questions/<int:question_id>/delete', methods=['POST'])
+    @login_required
+    def admin_delete_question(question_id):
+        if not current_user.is_admin:
+            abort(403)
+        
+        question = Question.query.get_or_404(question_id)
+        assignment_id = question.assignment_id
+        db.session.delete(question)
+        db.session.commit()
+        flash('Question deleted successfully!', 'success')
+        return redirect(url_for('admin_edit_assignment', assignment_id=assignment_id))
+    
+    # ==================== USER ASSIGNMENT ROUTES ====================
+    
+    @app.route('/courses/<int:course_id>/assignments')
+    @login_required
+    def course_assignments(course_id):
+        course = Course.query.get_or_404(course_id)
+        
+        if not user_can_access_course(current_user, course):
+            flash('You do not have access to this course.', 'danger')
+            return redirect(url_for('user_dashboard'))
+        
+        assignments = Assignment.query.filter_by(course_id=course_id, is_active=True).all()
+        
+        assignment_status = []
+        for assignment in assignments:
+            best_score = assignment.get_best_score(current_user.id)
+            attempts = assignment.get_user_attempts(current_user.id)
+            has_passed = assignment.user_has_passed(current_user.id)
+            
+            assignment_status.append({
+                'assignment': assignment,
+                'best_score': best_score,
+                'attempts_count': len(attempts),
+                'has_passed': has_passed,
+                'can_attempt': assignment.max_attempts == 0 or len(attempts) < assignment.max_attempts
+            })
+        
+        return render_template('user/course_assignments.html',
+                               title=f'{course.title} - Assignments',
+                               course=course,
+                               assignment_status=assignment_status)
+    
+    @app.route('/assignments/<int:assignment_id>/start', methods=['GET', 'POST'])
+    @login_required
+    def start_assignment(assignment_id):
+        assignment = Assignment.query.get_or_404(assignment_id)
+        
+        if not user_can_access_course(current_user, assignment.course):
+            flash('You do not have access to this assignment.', 'danger')
+            return redirect(url_for('user_dashboard'))
+        
+        if not assignment.is_active:
+            flash('This assignment is not currently available.', 'warning')
+            return redirect(url_for('course_assignments', course_id=assignment.course_id))
+        
+        attempts = assignment.get_user_attempts(current_user.id)
+        if assignment.max_attempts > 0 and len(attempts) >= assignment.max_attempts:
+            flash('You have reached the maximum number of attempts for this assignment.', 'warning')
+            return redirect(url_for('course_assignments', course_id=assignment.course_id))
+        
+        attempt = UserAssignmentAttempt(
+            user_id=current_user.id,
+            assignment_id=assignment_id
+        )
+        db.session.add(attempt)
+        db.session.commit()
+        
+        return redirect(url_for('take_assignment', attempt_id=attempt.id))
+    
+    @app.route('/attempts/<int:attempt_id>', methods=['GET', 'POST'])
+    @login_required
+    def take_assignment(attempt_id):
+        attempt = UserAssignmentAttempt.query.get_or_404(attempt_id)
+        
+        if attempt.user_id != current_user.id:
+            abort(403)
+        
+        if attempt.completed_at:
+            return redirect(url_for('assignment_result', attempt_id=attempt.id))
+        
+        assignment = attempt.assignment
+        questions = Question.query.filter_by(assignment_id=assignment.id).order_by(Question.order).all()
+        
+        if request.method == 'POST':
+            answers = {}
+            correct_count = 0
+            total_points = 0
+            earned_points = 0
+            
+            for question in questions:
+                answer = request.form.get(f'question_{question.id}')
+                q_points = question.points if question.points else 1
+                if answer:
+                    answers[str(question.id)] = answer
+                    total_points += q_points
+                    if question.is_correct(answer):
+                        correct_count += 1
+                        earned_points += q_points
+                else:
+                    total_points += q_points
+            
+            score = round((earned_points / total_points * 100) if total_points > 0 else 0)
+            
+            attempt.answers = json.dumps(answers)
+            attempt.score = score
+            attempt.completed_at = datetime.utcnow()
+            db.session.commit()
+            
+            return redirect(url_for('assignment_result', attempt_id=attempt.id))
+        
+        return render_template('user/take_assignment.html',
+                               title=assignment.title,
+                               assignment=assignment,
+                               attempt=attempt,
+                               questions=questions)
+    
+    @app.route('/attempts/<int:attempt_id>/result')
+    @login_required
+    def assignment_result(attempt_id):
+        attempt = UserAssignmentAttempt.query.get_or_404(attempt_id)
+        
+        if attempt.user_id != current_user.id and not current_user.is_admin:
+            abort(403)
+        
+        if not attempt.completed_at:
+            return redirect(url_for('take_assignment', attempt_id=attempt.id))
+        
+        assignment = attempt.assignment
+        questions = Question.query.filter_by(assignment_id=assignment.id).order_by(Question.order).all()
+        
+        answers = json.loads(attempt.answers) if attempt.answers else {}
+        
+        question_results = []
+        for question in questions:
+            user_answer = answers.get(str(question.id))
+            is_correct = question.is_correct(user_answer) if user_answer else False
+            
+            question_results.append({
+                'question': question,
+                'user_answer': user_answer,
+                'is_correct': is_correct
+            })
+        
+        return render_template('user/assignment_result.html',
+                               title=f'{assignment.title} - Results',
+                               assignment=assignment,
+                               attempt=attempt,
+                               question_results=question_results)

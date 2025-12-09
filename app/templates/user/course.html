@@ -172,7 +172,12 @@
         </div>
     </div>
 
-    <h2 class="section-title">Course Content</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="section-title mb-0">Course Content</h2>
+        <a href="{{ url_for('course_assignments', course_id=course.id) }}" class="btn btn-outline-primary">
+            <i class="fas fa-tasks me-1"></i> View Assignments
+        </a>
+    </div>
 
     {% if not lessons %}
     <div class="alert alert-info">

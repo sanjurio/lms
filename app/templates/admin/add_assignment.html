@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h1 class="section-title">Add Assignment to {{ course.title }}</h1>
+
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}" class="active">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Interests</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Interest Requests</a></li>
+            <li><a href="{{ url_for('admin_mandatory_courses') }}">Mandatory Courses</a></li>
+        </ul>
+    </div>
+
+    <div class="admin-container">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="form-group">
+                        <label for="title">Assignment Title</label>
+                        {{ form.title(class="form-control", placeholder="e.g., Module 1 Quiz") }}
+                        {% for error in form.title.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        {{ form.description(class="form-control", rows=3, placeholder="Describe what this assignment covers...") }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="passing_score">Passing Score (%)</label>
+                                {{ form.passing_score(class="form-control") }}
+                                <small class="form-text text-muted">Minimum score to pass (default 70%)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="time_limit_minutes">Time Limit (minutes)</label>
+                                {{ form.time_limit_minutes(class="form-control") }}
+                                <small class="form-text text-muted">0 = no time limit</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="max_attempts">Max Attempts</label>
+                                {{ form.max_attempts(class="form-control") }}
+                                <small class="form-text text-muted">0 = unlimited</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-check">
+                            {{ form.is_active(class="form-check-input") }}
+                            <label class="form-check-label" for="is_active">
+                                Active (users can take this assignment)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create Assignment
+                        </button>
+                        <a href="{{ url_for('admin_course_content', course_id=course.id) }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
