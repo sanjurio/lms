@@ -16,8 +16,7 @@ def send_password_reset_email(to_email, otp_code, username):
     from_email = os.environ.get('SMTP_FROM_EMAIL', smtp_user)
     
     if not smtp_user or not smtp_password:
-        logger.error("SMTP credentials not configured")
-        print(f"SMTP_USER exists: {bool(smtp_user)}, SMTP_PASSWORD exists: {bool(smtp_password)}")
+        logger.error(f"SMTP credentials not configured - SMTP_USER exists: {bool(smtp_user)}, SMTP_PASSWORD exists: {bool(smtp_password)}")
         return False
     
     logger.info(f"Attempting to send email via {smtp_host}:{smtp_port} from {smtp_user}")
@@ -97,6 +96,7 @@ def send_password_reset_email(to_email, otp_code, username):
         logger.info(f"Password reset email sent to {to_email}")
         return True
     except Exception as e:
-        logger.error(f"Failed to send password reset email: {e}")
-        print(f"SMTP ERROR: {type(e).__name__}: {e}")
+        import traceback
+        logger.error(f"Failed to send password reset email: {type(e).__name__}: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return False
