@@ -77,7 +77,7 @@
             document.getElementById('analysisResults').style.display = 'none';
 
             const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-            fetch('/api/analyze-document', {
+            fetch('/document-analysis', {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': csrfToken
