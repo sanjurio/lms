@@ -57,22 +57,26 @@
                 <div class="form-group">
                     {{ form.content.label(class="form-label") }}
                     
-                    <div class="editor-toolbar">
-                        <button type="button" onclick="formatText('b')"><i class="fas fa-bold"></i></button>
-                        <button type="button" onclick="formatText('i')"><i class="fas fa-italic"></i></button>
-                        <button type="button" onclick="formatText('h2')"><i class="fas fa-heading"></i></button>
-                        <button type="button" onclick="formatText('ul')"><i class="fas fa-list-ul"></i></button>
-                        <button type="button" onclick="formatText('ol')"><i class="fas fa-list-ol"></i></button>
-                        <button type="button" onclick="formatText('code')"><i class="fas fa-code"></i></button>
-                        <button type="button" onclick="formatText('pre')"><i class="fas fa-file-code"></i></button>
-                        <button type="button" onclick="formatText('a')"><i class="fas fa-link"></i></button>
+                    <div class="inline-media-toolbar">
+                        <span class="toolbar-label">Insert Media:</span>
+                        <button type="button" class="inline-media-btn" onclick="showYouTubeDialog()" title="Insert YouTube Video">
+                            <i class="fab fa-youtube"></i> YouTube
+                        </button>
+                        <button type="button" class="inline-media-btn" onclick="showOneDriveDialog()" title="Insert OneDrive/External Video">
+                            <i class="fab fa-microsoft"></i> Video Embed
+                        </button>
+                        <button type="button" class="inline-media-btn" onclick="showFileDialog()" title="Insert File Download">
+                            <i class="fas fa-file-download"></i> File
+                        </button>
+                        <button type="button" class="inline-media-btn" onclick="showLinkDialog()" title="Insert External Link">
+                            <i class="fas fa-external-link-alt"></i> Link
+                        </button>
                     </div>
                     
                     <textarea id="content" name="{{ form.content.name }}" style="display:none;">{{ form.content.data|e }}</textarea>
                     <div id="quill-editor" class="quill-dark" aria-label="Lesson content editor"></div>
-                    <div class="form-text">You can use the editor toolbar to format content. The saved content will be HTML.</div>
+                    <div class="form-text">Use the toolbar above to insert videos, files, and links inline within your content. They will appear exactly where you place your cursor.</div>
 
-                    <div class="form-text">You can use HTML tags for formatting.</div>
                     <div class="error-message">
                         {% for error in form.content.errors %}
                             {{ error }}
@@ -89,8 +93,8 @@
         
         {% if lesson %}
         <div class="media-management-section mt-4">
-            <h3 class="section-subtitle">Media & Resources</h3>
-            <p class="text-muted">Add YouTube videos, upload files, or add external links (OneDrive, Google Drive, etc.)</p>
+            <h3 class="section-subtitle">Media Library</h3>
+            <p class="text-muted">Upload files here, then insert them into your content above using the "File" button.</p>
             
             <div class="media-tabs">
                 <button type="button" class="media-tab active" data-tab="youtube">
@@ -134,7 +138,7 @@
                             <i class="fas fa-upload"></i> Upload File
                         </button>
                     </div>
-                    <div class="form-text">Allowed: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, ZIP, RAR, PNG, JPG, JPEG, GIF</div>
+                    <div class="form-text">Allowed: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, ZIP, RAR, PNG, JPG, JPEG, GIF, MP4, WEBM, MOV</div>
                 </div>
                 <div id="files-list" class="media-list"></div>
             </div>
@@ -159,6 +163,96 @@
         {% endif %}
     </div>
 </div>
+
+<!-- YouTube Dialog -->
+<div id="youtube-dialog" class="media-dialog hidden">
+    <div class="media-dialog-content">
+        <h4><i class="fab fa-youtube text-danger"></i> Insert YouTube Video</h4>
+        <div class="form-group">
+            <label class="form-label">YouTube URL</label>
+            <input type="text" id="inline-youtube-url" class="form-control" placeholder="https://youtube.com/watch?v=... or https://youtu.be/...">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Title (optional)</label>
+            <input type="text" id="inline-youtube-title" class="form-control" placeholder="Video title">
+        </div>
+        <div class="dialog-buttons">
+            <button type="button" class="btn btn-secondary" onclick="closeDialog('youtube-dialog')">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="insertYouTubeInline()">Insert Video</button>
+        </div>
+    </div>
+</div>
+
+<!-- OneDrive/External Video Dialog -->
+<div id="onedrive-dialog" class="media-dialog hidden">
+    <div class="media-dialog-content">
+        <h4><i class="fab fa-microsoft text-primary"></i> Insert Video Embed</h4>
+        <p class="text-muted">For OneDrive: Right-click video > Share > Embed > Copy the embed URL or full iframe code</p>
+        <div class="form-group">
+            <label class="form-label">Embed URL or Iframe Code</label>
+            <textarea id="inline-embed-code" class="form-control" rows="3" placeholder="Paste embed URL or full iframe code here..."></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Title (optional)</label>
+            <input type="text" id="inline-embed-title" class="form-control" placeholder="Video title">
+        </div>
+        <div class="dialog-buttons">
+            <button type="button" class="btn btn-secondary" onclick="closeDialog('onedrive-dialog')">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="insertEmbedInline()">Insert Video</button>
+        </div>
+    </div>
+</div>
+
+<!-- File Dialog -->
+<div id="file-dialog" class="media-dialog hidden">
+    <div class="media-dialog-content">
+        <h4><i class="fas fa-file-download text-primary"></i> Insert File Download</h4>
+        <div class="form-group">
+            <label class="form-label">Select from uploaded files or enter URL</label>
+            <select id="inline-file-select" class="form-control">
+                <option value="">-- Select uploaded file --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Or paste file URL directly</label>
+            <input type="text" id="inline-file-url" class="form-control" placeholder="https://example.com/file.pdf">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Display Text</label>
+            <input type="text" id="inline-file-title" class="form-control" placeholder="Click here to download">
+        </div>
+        <div class="dialog-buttons">
+            <button type="button" class="btn btn-secondary" onclick="closeDialog('file-dialog')">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="insertFileInline()">Insert File</button>
+        </div>
+    </div>
+</div>
+
+<!-- Link Dialog -->
+<div id="link-dialog" class="media-dialog hidden">
+    <div class="media-dialog-content">
+        <h4><i class="fas fa-external-link-alt text-info"></i> Insert External Link</h4>
+        <div class="form-group">
+            <label class="form-label">URL</label>
+            <input type="text" id="inline-link-url" class="form-control" placeholder="https://...">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Link Text</label>
+            <input type="text" id="inline-link-title" class="form-control" placeholder="Click here">
+        </div>
+        <div class="form-group">
+            <label class="form-check">
+                <input type="checkbox" id="inline-link-newwindow" checked>
+                <span>Open in new window</span>
+            </label>
+        </div>
+        <div class="dialog-buttons">
+            <button type="button" class="btn btn-secondary" onclick="closeDialog('link-dialog')">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="insertLinkInline()">Insert Link</button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -166,11 +260,13 @@
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 
 <script>
+let quill;
+
 (function () {
     const textarea = document.getElementById('content');
     const initialHtml = textarea.value || '';
 
-    const quill = new Quill('#quill-editor', {
+    quill = new Quill('#quill-editor', {
         theme: 'snow',
         modules: {
             toolbar: [
@@ -193,6 +289,195 @@
 
     quill.root.setAttribute('aria-label', 'Lesson content editable area');
 })();
+
+// Dialog functions
+function showYouTubeDialog() {
+    document.getElementById('inline-youtube-url').value = '';
+    document.getElementById('inline-youtube-title').value = '';
+    document.getElementById('youtube-dialog').classList.remove('hidden');
+}
+
+function showOneDriveDialog() {
+    document.getElementById('inline-embed-code').value = '';
+    document.getElementById('inline-embed-title').value = '';
+    document.getElementById('onedrive-dialog').classList.remove('hidden');
+}
+
+function showFileDialog() {
+    document.getElementById('inline-file-url').value = '';
+    document.getElementById('inline-file-title').value = '';
+    populateFileSelect();
+    document.getElementById('file-dialog').classList.remove('hidden');
+}
+
+function showLinkDialog() {
+    document.getElementById('inline-link-url').value = '';
+    document.getElementById('inline-link-title').value = '';
+    document.getElementById('link-dialog').classList.remove('hidden');
+}
+
+function closeDialog(dialogId) {
+    document.getElementById(dialogId).classList.add('hidden');
+}
+
+// Close dialogs when clicking outside
+document.querySelectorAll('.media-dialog').forEach(dialog => {
+    dialog.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
+    });
+});
+
+// Extract YouTube video ID
+function getYouTubeEmbedUrl(url) {
+    let videoId = null;
+    url = url.trim();
+    
+    if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split('?')[0];
+    } else if (url.includes('youtube.com/watch')) {
+        const match = url.match(/v=([^&]+)/);
+        if (match) videoId = match[1];
+    } else if (url.includes('youtube.com/embed/')) {
+        videoId = url.split('embed/')[1].split('?')[0];
+    }
+    
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+}
+
+function insertYouTubeInline() {
+    const url = document.getElementById('inline-youtube-url').value.trim();
+    const title = document.getElementById('inline-youtube-title').value.trim();
+    
+    if (!url) {
+        alert('Please enter a YouTube URL');
+        return;
+    }
+    
+    const embedUrl = getYouTubeEmbedUrl(url);
+    if (!embedUrl) {
+        alert('Invalid YouTube URL. Please use a youtube.com or youtu.be link.');
+        return;
+    }
+    
+    const html = `
+<div class="embedded-video" data-type="youtube">
+    ${title ? `<p class="video-caption"><strong>${title}</strong></p>` : ''}
+    <div class="video-container">
+        <iframe src="${embedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+</div>
+<p><br></p>
+`;
+    
+    insertHtmlAtCursor(html);
+    closeDialog('youtube-dialog');
+}
+
+function insertEmbedInline() {
+    let embedCode = document.getElementById('inline-embed-code').value.trim();
+    const title = document.getElementById('inline-embed-title').value.trim();
+    
+    if (!embedCode) {
+        alert('Please enter an embed URL or iframe code');
+        return;
+    }
+    
+    let iframeHtml = '';
+    
+    // Check if it's already an iframe
+    if (embedCode.includes('<iframe')) {
+        // Extract and use the iframe, but ensure it has proper attributes
+        iframeHtml = embedCode;
+    } else {
+        // It's just a URL, create an iframe
+        iframeHtml = `<iframe src="${embedCode}" frameborder="0" allowfullscreen></iframe>`;
+    }
+    
+    const html = `
+<div class="embedded-video" data-type="external">
+    ${title ? `<p class="video-caption"><strong>${title}</strong></p>` : ''}
+    <div class="video-container">
+        ${iframeHtml}
+    </div>
+</div>
+<p><br></p>
+`;
+    
+    insertHtmlAtCursor(html);
+    closeDialog('onedrive-dialog');
+}
+
+function insertFileInline() {
+    const selectEl = document.getElementById('inline-file-select');
+    const urlInput = document.getElementById('inline-file-url').value.trim();
+    const title = document.getElementById('inline-file-title').value.trim() || 'Download File';
+    
+    let fileUrl = '';
+    let fileName = title;
+    
+    if (selectEl.value) {
+        // Use selected file from library
+        const option = selectEl.options[selectEl.selectedIndex];
+        fileUrl = option.dataset.url;
+        fileName = title || option.text;
+    } else if (urlInput) {
+        fileUrl = urlInput;
+    } else {
+        alert('Please select a file or enter a URL');
+        return;
+    }
+    
+    const html = `<div class="embedded-file"><a href="${fileUrl}" class="file-download-link" download><i class="fas fa-file-download"></i> ${fileName}</a></div>`;
+    
+    insertHtmlAtCursor(html);
+    closeDialog('file-dialog');
+}
+
+function insertLinkInline() {
+    const url = document.getElementById('inline-link-url').value.trim();
+    const title = document.getElementById('inline-link-title').value.trim() || url;
+    const newWindow = document.getElementById('inline-link-newwindow').checked;
+    
+    if (!url) {
+        alert('Please enter a URL');
+        return;
+    }
+    
+    const target = newWindow ? ' target="_blank" rel="noopener noreferrer"' : '';
+    const html = `<a href="${url}"${target}>${title}</a>`;
+    
+    insertHtmlAtCursor(html);
+    closeDialog('link-dialog');
+}
+
+function insertHtmlAtCursor(html) {
+    const range = quill.getSelection(true);
+    quill.clipboard.dangerouslyPasteHTML(range.index, html);
+    quill.setSelection(range.index + 1);
+}
+
+function populateFileSelect() {
+    const select = document.getElementById('inline-file-select');
+    select.innerHTML = '<option value="">-- Select uploaded file --</option>';
+    
+    {% if lesson %}
+    fetch(`/api/lessons/{{ lesson.id }}/media`, {
+        headers: { 'X-CSRFToken': '{{ csrf_token() }}' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        data.media.filter(m => m.media_type === 'file').forEach(file => {
+            const option = document.createElement('option');
+            option.value = file.id;
+            option.text = file.title || file.file_name;
+            option.dataset.url = `/static/${file.file_path || ''}`;
+            select.appendChild(option);
+        });
+    });
+    {% endif %}
+}
 
 {% if lesson %}
 const lessonId = {{ lesson.id }};
@@ -236,16 +521,19 @@ function loadMediaItems() {
 }
 
 function createMediaItemHtml(media) {
-    let icon, details;
+    let icon, details, insertBtn = '';
     if (media.media_type === 'youtube') {
         icon = '<i class="fab fa-youtube text-danger"></i>';
         details = `<a href="${media.url}" target="_blank">${media.url}</a>`;
+        insertBtn = `<button type="button" class="btn btn-sm btn-outline-primary" onclick="quickInsertYouTube('${media.url}', '${(media.title || '').replace(/'/g, "\\'")}')"><i class="fas fa-plus"></i> Insert</button>`;
     } else if (media.media_type === 'file') {
         icon = '<i class="fas fa-file text-primary"></i>';
         details = `${media.file_name} (${media.file_size})`;
+        insertBtn = `<button type="button" class="btn btn-sm btn-outline-primary" onclick="quickInsertFile('${media.file_path || ''}', '${(media.title || media.file_name || '').replace(/'/g, "\\'")}')"><i class="fas fa-plus"></i> Insert</button>`;
     } else if (media.media_type === 'link') {
         icon = '<i class="fas fa-external-link-alt text-info"></i>';
         details = `<a href="${media.url}" target="_blank">${media.url}</a>`;
+        insertBtn = `<button type="button" class="btn btn-sm btn-outline-primary" onclick="quickInsertLink('${media.url}', '${(media.title || '').replace(/'/g, "\\'")}')"><i class="fas fa-plus"></i> Insert</button>`;
     }
     
     return `
@@ -256,12 +544,39 @@ function createMediaItemHtml(media) {
                 <div class="media-item-details">${details}</div>
             </div>
             <div class="media-item-actions">
+                ${insertBtn}
                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteMedia(${media.id})">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
         </div>
     `;
+}
+
+function quickInsertYouTube(url, title) {
+    const embedUrl = getYouTubeEmbedUrl(url);
+    if (embedUrl) {
+        const html = `
+<div class="embedded-video" data-type="youtube">
+    ${title ? `<p class="video-caption"><strong>${title}</strong></p>` : ''}
+    <div class="video-container">
+        <iframe src="${embedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+</div>
+<p><br></p>
+`;
+        insertHtmlAtCursor(html);
+    }
+}
+
+function quickInsertFile(filePath, title) {
+    const html = `<div class="embedded-file"><a href="/static/${filePath}" class="file-download-link" download><i class="fas fa-file-download"></i> ${title}</a></div>`;
+    insertHtmlAtCursor(html);
+}
+
+function quickInsertLink(url, title) {
+    const html = `<a href="${url}" target="_blank" rel="noopener noreferrer">${title || url}</a>`;
+    insertHtmlAtCursor(html);
 }
 
 function addYouTubeVideo() {
@@ -379,6 +694,87 @@ loadMediaItems();
 </script>
 
 <style>
+    .inline-media-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        padding: 0.75rem;
+        background: rgba(80, 227, 194, 0.1);
+        border-radius: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .toolbar-label {
+        color: #50e3c2;
+        font-weight: 600;
+        margin-right: 0.5rem;
+    }
+    
+    .inline-media-btn {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #d9e6f2;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .inline-media-btn:hover {
+        background: rgba(80, 227, 194, 0.2);
+        border-color: #50e3c2;
+        color: #fff;
+    }
+    
+    .inline-media-btn .fab, .inline-media-btn .fas {
+        font-size: 1rem;
+    }
+    
+    .media-dialog {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    }
+    
+    .media-dialog.hidden {
+        display: none;
+    }
+    
+    .media-dialog-content {
+        background: #1a2332;
+        border-radius: 12px;
+        padding: 1.5rem;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    
+    .media-dialog-content h4 {
+        color: #fff;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .dialog-buttons {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+        margin-top: 1.5rem;
+    }
+
     #quill-editor {
         min-height: 320px;
         background: #0f1720;

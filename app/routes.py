@@ -1138,6 +1138,10 @@ def register_routes(app):
 
         course = Course.query.get_or_404(course_id)
         form = LessonForm()
+        
+        # Auto-calculate next order number
+        max_order = db.session.query(db.func.max(Lesson.order)).filter_by(course_id=course_id).scalar()
+        next_order = (max_order or 0) + 1
 
         if form.validate_on_submit():
             lesson = Lesson(
@@ -1150,8 +1154,13 @@ def register_routes(app):
             )
             db.session.add(lesson)
             db.session.commit()
-            flash('Lesson created successfully!', 'success')
-            return redirect(url_for('admin_lessons', course_id=course_id))
+            flash('Lesson created successfully! You can now add media to your lesson.', 'success')
+            # Redirect to edit page so user can add media
+            return redirect(url_for('admin_edit_lesson', lesson_id=lesson.id))
+
+        # Set default order for new lessons
+        if form.order.data is None or form.order.data == 0:
+            form.order.data = next_order
 
         return render_template('admin/edit_lesson.html', title='Add Lesson', form=form, course=course)
 
