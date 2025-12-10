@@ -11,12 +11,13 @@ A comprehensive Learning Management System (LMS) for Enterprise Erlang/OTP devel
   - Resend verification code option available
   - EmailVerificationToken model stores pending registrations
 
-- **7-Day Mandatory Course Reminders**: Automated reminder system for approaching deadlines
-  - Admin can manually trigger reminders from Mandatory Courses page
+- **7-Day Mandatory Course Reminders**: Fully automated reminder system for approaching deadlines
+  - **Automatic daily scheduling** via APScheduler - runs at 8:00 AM UTC every day
   - Sends urgent reminder emails to users with courses due within 7 days
   - Only sends to users who haven't completed the course
-  - Tracks sent reminders to avoid duplicate emails
+  - Tracks sent reminders to avoid duplicate emails (application-level deduplication)
   - MandatoryCourseReminder model for tracking sent notifications
+  - Admin can still manually trigger reminders from Mandatory Courses page as backup
 
 - **Inline Media Embedding**: Enhanced lesson editor with inline media insertion
   - Added toolbar buttons to insert YouTube, OneDrive/external videos, files, and links directly in content
