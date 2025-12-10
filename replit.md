@@ -4,6 +4,20 @@
 A comprehensive Learning Management System (LMS) for Enterprise Erlang/OTP development training designed for telecom and distributed systems. The platform features domain-based access control, course management, user progress tracking, forum discussions, and document analysis capabilities.
 
 ## Recent Changes (December 10, 2025)
+- **Email Verification for Registration**: Added email OTP verification during registration
+  - Users must verify their email address before proceeding to 2FA setup
+  - Prevents fake/dummy account creation
+  - 6-digit OTP sent to email with 10-minute expiry
+  - Resend verification code option available
+  - EmailVerificationToken model stores pending registrations
+
+- **7-Day Mandatory Course Reminders**: Automated reminder system for approaching deadlines
+  - Admin can manually trigger reminders from Mandatory Courses page
+  - Sends urgent reminder emails to users with courses due within 7 days
+  - Only sends to users who haven't completed the course
+  - Tracks sent reminders to avoid duplicate emails
+  - MandatoryCourseReminder model for tracking sent notifications
+
 - **Inline Media Embedding**: Enhanced lesson editor with inline media insertion
   - Added toolbar buttons to insert YouTube, OneDrive/external videos, files, and links directly in content
   - Media can now be placed anywhere in the lesson (topics → video → topics → file pattern)
@@ -107,6 +121,11 @@ app/
 - `DATABASE_URL`: PostgreSQL connection string (auto-configured by Replit)
 - `SESSION_SECRET`: Flask session secret key (configured as Replit secret)
 - `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`: Database credentials (auto-configured)
+- `SMTP_USER`: Gmail address for sending emails (required for email features)
+- `SMTP_PASSWORD`: Gmail App Password (required for email features)
+- `SMTP_HOST`: SMTP server host (default: smtp.gmail.com)
+- `SMTP_PORT`: SMTP server port (default: 587)
+- `SMTP_FROM_EMAIL`: Email sender address (defaults to SMTP_USER)
 
 ### Deployment
 - **Development**: Flask dev server on port 5000 (workflow: `python main.py`)
