@@ -4,7 +4,7 @@
 <div class="container mt-4">
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="mb-3"><i data-feather="file-text" class="me-2"></i>Document Analysis</h1>
+            <h1 class="mb-3"><i class="fas fa-file-alt me-2"></i>Document Analysis</h1>
             <p class="text-muted">Upload a document (PDF, DOCX, or TXT) to analyze its content and generate insights.</p>
         </div>
     </div>
@@ -13,21 +13,21 @@
         <div class="col-lg-5 mb-4">
             <div class="card bg-dark border-secondary h-100">
                 <div class="card-header bg-transparent border-secondary">
-                    <h5 class="mb-0"><i data-feather="upload" class="me-2"></i>Upload Document</h5>
+                    <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Upload Document</h5>
                 </div>
                 <div class="card-body">
                     <div class="upload-zone p-4 text-center rounded mb-3" style="border: 2px dashed rgba(255,255,255,0.2); background: rgba(255,255,255,0.03);">
-                        <i data-feather="file-plus" style="width: 48px; height: 48px; opacity: 0.5;"></i>
-                        <p class="mt-3 mb-2">Drag and drop your file here or</p>
+                        <i class="fas fa-file-circle-plus fa-3x mb-3" style="opacity: 0.5;"></i>
+                        <p class="mt-2 mb-2">Select your document file</p>
                         <input type="file" class="form-control bg-dark text-light border-secondary" id="documentFile" accept=".pdf,.docx,.txt">
                     </div>
                     <small class="text-muted d-block mb-3">
-                        <i data-feather="info" style="width: 14px; height: 14px;"></i>
+                        <i class="fas fa-info-circle me-1"></i>
                         Supported formats: PDF, DOCX, TXT (Max 10MB)
                     </small>
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button class="btn btn-primary w-100" id="analyzeBtn" onclick="uploadDocument()">
-                        <i data-feather="zap" class="me-2"></i>Analyze Document
+                        <i class="fas fa-bolt me-2"></i>Analyze Document
                     </button>
                 </div>
             </div>
@@ -36,27 +36,27 @@
         <div class="col-lg-7 mb-4">
             <div class="card bg-dark border-secondary h-100">
                 <div class="card-header bg-transparent border-secondary">
-                    <h5 class="mb-0"><i data-feather="help-circle" class="me-2"></i>How It Works</h5>
+                    <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>How It Works</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4 text-center mb-3">
                             <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-                                <i data-feather="upload-cloud" style="color: var(--bs-primary);"></i>
+                                <i class="fas fa-cloud-upload-alt text-primary fa-lg"></i>
                             </div>
                             <h6>1. Upload</h6>
                             <small class="text-muted">Select your document file</small>
                         </div>
                         <div class="col-md-4 text-center mb-3">
                             <div class="rounded-circle bg-info bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-                                <i data-feather="cpu" style="color: var(--bs-info);"></i>
+                                <i class="fas fa-microchip text-info fa-lg"></i>
                             </div>
                             <h6>2. Analyze</h6>
                             <small class="text-muted">AI extracts key information</small>
                         </div>
                         <div class="col-md-4 text-center mb-3">
                             <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-                                <i data-feather="check-circle" style="color: var(--bs-success);"></i>
+                                <i class="fas fa-check-circle text-success fa-lg"></i>
                             </div>
                             <h6>3. Review</h6>
                             <small class="text-muted">Get summary & Q&A</small>
@@ -84,7 +84,7 @@
     <div id="errorState" class="row mt-2" style="display: none;">
         <div class="col-12">
             <div class="alert alert-danger d-flex align-items-center" role="alert">
-                <i data-feather="alert-circle" class="me-2"></i>
+                <i class="fas fa-exclamation-circle me-2"></i>
                 <div id="errorMessage"></div>
             </div>
         </div>
@@ -93,7 +93,7 @@
     <div id="analysisResults" class="mt-2" style="display: none;">
         <div class="row">
             <div class="col-12 mb-3">
-                <h3><i data-feather="bar-chart-2" class="me-2"></i>Analysis Results</h3>
+                <h3><i class="fas fa-chart-bar me-2"></i>Analysis Results</h3>
             </div>
         </div>
 
@@ -101,7 +101,7 @@
             <div class="col-lg-12 mb-4">
                 <div class="card bg-dark border-success">
                     <div class="card-header bg-success bg-opacity-10 border-success">
-                        <h5 class="mb-0 text-success"><i data-feather="file-text" class="me-2"></i>Document Summary</h5>
+                        <h5 class="mb-0 text-success"><i class="fas fa-file-alt me-2"></i>Document Summary</h5>
                     </div>
                     <div class="card-body">
                         <div id="keyTakeaways" class="mb-3"></div>
@@ -111,7 +111,7 @@
                             <p id="fullSummaryContent" class="text-light mb-0"></p>
                         </div>
                         <button class="btn btn-sm btn-outline-secondary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#fullSummaryCollapse" aria-expanded="false">
-                            <i data-feather="chevron-down" style="width: 16px; height: 16px;"></i> Show Full Summary
+                            <i class="fas fa-chevron-down me-1"></i> Show Full Summary
                         </button>
                     </div>
                 </div>
@@ -122,7 +122,7 @@
             <div class="col-12 mb-4">
                 <div class="card bg-dark border-primary">
                     <div class="card-header bg-primary bg-opacity-10 border-primary">
-                        <h5 class="mb-0 text-primary"><i data-feather="help-circle" class="me-2"></i>Questions & Answers</h5>
+                        <h5 class="mb-0 text-primary"><i class="fas fa-question-circle me-2"></i>Questions & Answers</h5>
                     </div>
                     <div class="card-body p-0">
                         <div class="accordion accordion-flush" id="questionsAccordion"></div>
@@ -196,8 +196,7 @@
         .then(data => {
             document.getElementById('loadingState').style.display = 'none';
             analyzeBtn.disabled = false;
-            analyzeBtn.innerHTML = '<i data-feather="zap" class="me-2"></i>Analyze Document';
-            feather.replace();
+            analyzeBtn.innerHTML = '<i class="fas fa-bolt me-2"></i>Analyze Document';
             
             if (data.success) {
                 displayResults(data);
@@ -208,8 +207,7 @@
         .catch(error => {
             document.getElementById('loadingState').style.display = 'none';
             analyzeBtn.disabled = false;
-            analyzeBtn.innerHTML = '<i data-feather="zap" class="me-2"></i>Analyze Document';
-            feather.replace();
+            analyzeBtn.innerHTML = '<i class="fas fa-bolt me-2"></i>Analyze Document';
             showError(error.message || 'An error occurred while analyzing the document');
         });
     }
@@ -217,7 +215,6 @@
     function showError(message) {
         document.getElementById('errorMessage').textContent = message;
         document.getElementById('errorState').style.display = 'block';
-        feather.replace();
     }
 
     function displayResults(data) {
@@ -231,7 +228,7 @@
         topSentences.forEach((sentence, index) => {
             const div = document.createElement('div');
             div.className = 'takeaway-item';
-            div.innerHTML = `<i data-feather="check" style="width: 16px; height: 16px; color: var(--bs-success); margin-right: 8px;"></i>${sentence.trim()}.`;
+            div.innerHTML = `<i class="fas fa-check text-success me-2"></i>${sentence.trim()}.`;
             keyTakeaways.appendChild(div);
         });
 
@@ -261,8 +258,6 @@
             `;
             accordion.appendChild(item);
         });
-
-        feather.replace();
     }
 </script>
 {% endblock %}
