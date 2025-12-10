@@ -1903,6 +1903,7 @@ def register_routes(app):
             
             if form.assignment_type.data == 'all':
                 # Assign selected courses to all users
+                courses_to_notify = []
                 for course_id in (form.course_ids.data or []):
                     existing = MandatoryCourse.query.filter_by(course_id=course_id, user_id=None).first()
                     if existing:
@@ -1917,6 +1918,7 @@ def register_routes(app):
                         )
                         db.session.add(mandatory)
                         added_courses += 1
+                        courses_to_notify.append(Course.query.get(course_id))
                         
                         # If requires_redo, reset progress for all users
                         if requires_redo:
@@ -1927,6 +1929,20 @@ def register_routes(app):
                                     UserLessonProgress.query.filter_by(lesson_id=lesson.id).delete()
                 
                 db.session.commit()
+                
+                # Send email notifications to all approved non-admin users
+                if courses_to_notify:
+                    from .utils.email_helpers import send_mandatory_course_email
+                    all_users = User.query.filter_by(is_admin=False, is_approved=True).all()
+                    emails_sent = 0
+                    for course in courses_to_notify:
+                        if course:
+                            for user in all_users:
+                                if send_mandatory_course_email(user.email, user.username, course.title, deadline):
+                                    emails_sent += 1
+                    if emails_sent > 0:
+                        flash(f'Email notifications sent to {len(all_users)} user(s).', 'info')
+                
                 if added_courses > 0:
                     flash(f'{added_courses} course(s) set as mandatory for all users!', 'success')
                 if skipped_courses > 0:
@@ -1934,6 +1950,7 @@ def register_routes(app):
             else:
                 # Assign selected courses to specific users
                 total_assignments = 0
+                notifications_to_send = []  # List of (user, course, deadline) tuples
                 for course_id in (form.course_ids.data or []):
                     for user_id in (form.user_ids.data or []):
                         existing = MandatoryCourse.query.filter_by(course_id=course_id, user_id=user_id).first()
@@ -1948,6 +1965,12 @@ def register_routes(app):
                             db.session.add(mandatory)
                             total_assignments += 1
                             
+                            # Queue notification
+                            user = User.query.get(user_id)
+                            course = Course.query.get(course_id)
+                            if user and course:
+                                notifications_to_send.append((user, course, deadline))
+                            
                             # If requires_redo, reset progress for this user
                             if requires_redo:
                                 lessons = Lesson.query.filter_by(course_id=course_id).all()
@@ -1958,6 +1981,17 @@ def register_routes(app):
                                     ).delete()
                 
                 db.session.commit()
+                
+                # Send email notifications
+                if notifications_to_send:
+                    from .utils.email_helpers import send_mandatory_course_email
+                    emails_sent = 0
+                    for user, course, dl in notifications_to_send:
+                        if send_mandatory_course_email(user.email, user.username, course.title, dl):
+                            emails_sent += 1
+                    if emails_sent > 0:
+                        flash(f'Email notifications sent for {emails_sent} assignment(s).', 'info')
+                
                 course_count = len(form.course_ids.data or [])
                 user_count = len(form.user_ids.data or [])
                 flash(f'{course_count} course(s) set as mandatory for {user_count} user(s)! ({total_assignments} new assignments)', 'success')
