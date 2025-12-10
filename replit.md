@@ -3,7 +3,15 @@
 ## Overview
 A comprehensive Learning Management System (LMS) for Enterprise Erlang/OTP development training designed for telecom and distributed systems. The platform features domain-based access control, course management, user progress tracking, forum discussions, and document analysis capabilities.
 
-## Recent Changes (December 9, 2025)
+## Recent Changes (December 10, 2025)
+- **Multi-Media Lesson Support**: Added comprehensive media management for lessons
+  - LessonMedia model for storing YouTube videos, uploaded files, and external links
+  - Admin UI with tabs for managing media (YouTube URLs with + button, file uploads, external links)
+  - User lesson view displays all media types with proper categorization
+  - Access control enforced: YouTube videos only visible to users with video permissions, files/links require text permissions
+  - Support for OneDrive, Google Drive, Dropbox links as external resources
+
+## Previous Changes (December 9, 2025)
 - **Fixed Course Deletion Errors**: Added proper cascade cleanup for assignments, questions, attempts, and related entities
 - **Improved Assignment System**: Assignments now appear as "Final Assessment" at end of courses
   - Users must complete all lessons before taking the final assessment
@@ -11,7 +19,7 @@ A comprehensive Learning Management System (LMS) for Enterprise Erlang/OTP devel
   - Validation prevents starting assignments that have no questions added yet
 - **Automatic Admin Creation**: Admin user (admin@example.com / Admin123) is automatically created on app startup if no admin exists
 
-## Previous Changes (December 8, 2025)
+## Changes (December 8, 2025)
 - **Course Completion Tracking System**: Implemented comprehensive progress tracking
   - Lesson pages: Added "Mark as Complete/Incomplete" buttons with status display
   - Course pages: Progress bar showing completion percentage and lesson status icons
