@@ -123,7 +123,12 @@ def create_app():
 
 
 def start_reminder_scheduler(app):
-    """Start the background scheduler for automatic mandatory course reminders"""
+    """Start the background scheduler for automatic mandatory course reminders
+    
+    Note: The check_and_send_mandatory_course_reminders function uses the 
+    MandatoryCourseReminder table to track sent reminders, preventing duplicate
+    emails even if the job runs from multiple workers.
+    """
     global scheduler
     
     def run_reminder_check():
@@ -147,7 +152,8 @@ def start_reminder_scheduler(app):
             minute=0,
             id='mandatory_course_reminders',
             name='Send mandatory course reminders 7 days before deadline',
-            replace_existing=True
+            replace_existing=True,
+            misfire_grace_time=3600
         )
         scheduler.start()
         logger.info("Background scheduler started - will check for mandatory course reminders daily at 8:00 AM UTC")
