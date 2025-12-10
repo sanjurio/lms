@@ -261,6 +261,7 @@
 /* Inline embedded content styles */
 .embedded-video {
     margin: 1.5rem 0;
+    max-width: 560px;
 }
 
 .embedded-video .video-caption {
@@ -321,6 +322,7 @@
 
 .video-grid {
     display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 560px));
     gap: 1.5rem;
 }
 
@@ -328,6 +330,7 @@
     background: rgba(0,0,0,0.2);
     border-radius: 8px;
     padding: 1rem;
+    max-width: 560px;
 }
 
 .video-title {
@@ -342,6 +345,7 @@
     height: 0;
     overflow: hidden;
     border-radius: 8px;
+    max-width: 560px;
 }
 
 .video-embed iframe {

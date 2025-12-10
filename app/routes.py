@@ -1155,7 +1155,7 @@ def register_routes(app):
             db.session.add(lesson)
             db.session.commit()
             flash('Lesson created successfully! You can now add media to your lesson.', 'success')
-            # Redirect to edit page so user can add media
+            # Redirect to edit page (PRG pattern) so media management is available
             return redirect(url_for('admin_edit_lesson', lesson_id=lesson.id))
 
         # Set default order for new lessons
