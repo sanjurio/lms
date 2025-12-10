@@ -194,12 +194,16 @@
         })
         .then(response => response.json())
         .then(data => {
+            console.log('Response data:', data);
             document.getElementById('loadingState').style.display = 'none';
             analyzeBtn.disabled = false;
             analyzeBtn.innerHTML = '<i class="fas fa-bolt me-2"></i>Analyze Document';
             
             if (data.success) {
+                console.log('Calling displayResults with:', data);
                 displayResults(data);
+            } else if (data.error) {
+                showError(data.error);
             } else {
                 showError(data.message || 'An error occurred while analyzing the document');
             }
@@ -218,46 +222,69 @@
     }
 
     function displayResults(data) {
-        document.getElementById('analysisResults').style.display = 'block';
+        console.log('displayResults called with:', JSON.stringify(data));
         
-        const sentences = data.summary.split(/[.!?]+/).filter(s => s.trim().length > 10);
+        const resultsDiv = document.getElementById('analysisResults');
+        resultsDiv.style.display = 'block';
+        
+        // Scroll to results
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        
+        // Handle summary
+        const summary = data.summary || 'No summary available';
+        const sentences = summary.split(/[.!?]+/).filter(s => s.trim().length > 10);
         const keyTakeaways = document.getElementById('keyTakeaways');
         keyTakeaways.innerHTML = '';
         
-        const topSentences = sentences.slice(0, 4);
-        topSentences.forEach((sentence, index) => {
+        if (sentences.length === 0) {
             const div = document.createElement('div');
             div.className = 'takeaway-item';
-            div.innerHTML = `<i class="fas fa-check text-success me-2"></i>${sentence.trim()}.`;
+            div.innerHTML = `<i class="fas fa-info-circle text-info me-2"></i>${summary}`;
             keyTakeaways.appendChild(div);
-        });
+        } else {
+            const topSentences = sentences.slice(0, 4);
+            topSentences.forEach((sentence, index) => {
+                const div = document.createElement('div');
+                div.className = 'takeaway-item';
+                div.innerHTML = `<i class="fas fa-check text-success me-2"></i>${sentence.trim()}.`;
+                keyTakeaways.appendChild(div);
+            });
+        }
 
-        document.getElementById('fullSummaryContent').textContent = data.summary;
+        document.getElementById('fullSummaryContent').textContent = summary;
 
+        // Handle questions
         const accordion = document.getElementById('questionsAccordion');
         accordion.innerHTML = '';
-
-        data.questions.forEach((qa, index) => {
-            const item = document.createElement('div');
-            item.className = 'accordion-item bg-transparent border-0';
-            item.innerHTML = `
-                <h2 class="accordion-header" id="heading${index}">
-                    <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="collapse${index}">
-                        <span class="badge bg-primary question-badge me-2">Q${index + 1}</span>
-                        ${qa.question}
-                    </button>
-                </h2>
-                <div id="collapse${index}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" aria-labelledby="heading${index}" data-bs-parent="#questionsAccordion">
-                    <div class="accordion-body">
-                        <div class="d-flex align-items-start">
-                            <span class="badge bg-success question-badge me-2 mt-1">A</span>
-                            <p class="mb-0">${qa.answer}</p>
+        
+        const questions = data.questions || [];
+        if (questions.length === 0) {
+            accordion.innerHTML = '<div class="p-3 text-muted">No questions generated from this document.</div>';
+        } else {
+            questions.forEach((qa, index) => {
+                const item = document.createElement('div');
+                item.className = 'accordion-item bg-transparent border-0';
+                item.innerHTML = `
+                    <h2 class="accordion-header" id="heading${index}">
+                        <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="collapse${index}">
+                            <span class="badge bg-primary question-badge me-2">Q${index + 1}</span>
+                            ${qa.question}
+                        </button>
+                    </h2>
+                    <div id="collapse${index}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" aria-labelledby="heading${index}" data-bs-parent="#questionsAccordion">
+                        <div class="accordion-body">
+                            <div class="d-flex align-items-start">
+                                <span class="badge bg-success question-badge me-2 mt-1">A</span>
+                                <p class="mb-0">${qa.answer}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            accordion.appendChild(item);
-        });
+                `;
+                accordion.appendChild(item);
+            });
+        }
+        
+        console.log('displayResults completed');
     }
 </script>
 {% endblock %}
