@@ -1,5 +1,6 @@
 import os
 import logging
+import atexit
 from datetime import datetime
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
@@ -7,7 +8,10 @@ from sqlalchemy.orm import DeclarativeBase
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
+from apscheduler.schedulers.background import BackgroundScheduler
 from .config import Config
+
+scheduler = BackgroundScheduler(daemon=True)
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -111,8 +115,44 @@ def create_app():
         
         # Register context processors
         register_context_processors(app)
+        
+        # Start the background scheduler for automatic reminders
+        start_reminder_scheduler(app)
 
     return app
+
+
+def start_reminder_scheduler(app):
+    """Start the background scheduler for automatic mandatory course reminders"""
+    global scheduler
+    
+    def run_reminder_check():
+        """Run the reminder check within app context"""
+        with app.app_context():
+            try:
+                from .routes import check_and_send_mandatory_course_reminders
+                reminders_sent = check_and_send_mandatory_course_reminders()
+                if reminders_sent > 0:
+                    logger.info(f"Automatic scheduler: Sent {reminders_sent} mandatory course reminder(s)")
+                else:
+                    logger.debug("Automatic scheduler: No reminders to send")
+            except Exception as e:
+                logger.error(f"Error in automatic reminder scheduler: {e}")
+    
+    if not scheduler.running:
+        scheduler.add_job(
+            func=run_reminder_check,
+            trigger='cron',
+            hour=8,
+            minute=0,
+            id='mandatory_course_reminders',
+            name='Send mandatory course reminders 7 days before deadline',
+            replace_existing=True
+        )
+        scheduler.start()
+        logger.info("Background scheduler started - will check for mandatory course reminders daily at 8:00 AM UTC")
+        
+        atexit.register(lambda: scheduler.shutdown(wait=False))
 
 # Template context processors
 def inject_now():
