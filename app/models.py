@@ -598,3 +598,42 @@ class LessonMedia(db.Model):
                 return f'{size:.1f} {unit}'
             size /= 1024
         return f'{size:.1f} TB'
+
+
+class EmailVerificationToken(db.Model):
+    """Store email verification OTP tokens for registration"""
+    __tablename__ = 'email_verification_tokens'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False, index=True)
+    username = db.Column(db.String(64), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    otp_code = db.Column(db.String(6), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    verified = db.Column(db.Boolean, default=False)
+    
+    def __repr__(self):
+        return f'<EmailVerificationToken email={self.email}>'
+    
+    def is_valid(self):
+        """Check if the token is still valid"""
+        return not self.verified and datetime.utcnow() < self.expires_at
+    
+    @staticmethod
+    def generate_otp():
+        """Generate a 6-digit OTP"""
+        import random
+        return ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+
+class MandatoryCourseReminder(db.Model):
+    """Track reminder emails sent for mandatory courses"""
+    __tablename__ = 'mandatory_course_reminders'
+    id = db.Column(db.Integer, primary_key=True)
+    mandatory_course_id = db.Column(db.Integer, db.ForeignKey('mandatory_courses.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reminder_type = db.Column(db.String(20), nullable=False)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    mandatory_course = db.relationship('MandatoryCourse', backref=db.backref('reminders', lazy='dynamic'))
+    user = db.relationship('User', backref=db.backref('course_reminders', lazy='dynamic'))

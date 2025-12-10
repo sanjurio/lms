@@ -212,3 +212,12 @@ class ResetPasswordForm(FlaskForm):
         EqualTo('password', message='Passwords must match')
     ])
     submit = SubmitField('Reset Password')
+
+
+class EmailVerificationForm(FlaskForm):
+    otp = StringField('Verification Code', validators=[
+        DataRequired(),
+        Length(min=6, max=6, message='Code must be 6 digits'),
+        Regexp('^\d{6}$', message='Code must be 6 digits')
+    ])
+    submit = SubmitField('Verify Email')

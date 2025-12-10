@@ -9,14 +9,16 @@ from .models import (User, Course, Lesson, Interest, UserInterest,
                     CourseInterest, UserCourse, ForumTopic, ForumReply,
                     UserLessonProgress, UserNote, UserBookmark, UserActivity,
                     MandatoryCourse, Assignment, Question, UserAssignmentAttempt,
-                    PasswordResetToken, LessonMedia)
+                    PasswordResetToken, LessonMedia, EmailVerificationToken,
+                    MandatoryCourseReminder)
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash
 from .forms import (LoginForm, RegistrationForm, TwoFactorForm,
                    SetupTwoFactorForm, InterestSelectionForm, UserApprovalForm,
                    CourseForm, LessonForm, InterestForm,
                    UserInterestAccessForm, ProfileForm, ForumTopicForm,
                    ForumReplyForm, MandatoryCourseForm, AssignmentForm, QuestionForm,
-                   ForgotPasswordForm, VerifyOTPForm, ResetPasswordForm)
+                   ForgotPasswordForm, VerifyOTPForm, ResetPasswordForm, EmailVerificationForm)
 from datetime import timedelta
 from .utils.auth_helpers import generate_otp_secret, verify_totp, generate_qr_code
 from .utils.course_helpers import get_user_accessible_courses, get_recommended_courses, user_can_access_course, get_user_interests_status
@@ -373,22 +375,117 @@ def register_routes(app):
 
         form = RegistrationForm()
         if form.validate_on_submit():
-            user = User(username=form.username.data, email=form.email.data)
-            user.set_password(form.password.data)
-            user.set_access_based_on_domain()
-            db.session.add(user)
+            otp_code = EmailVerificationToken.generate_otp()
+            expires_at = datetime.utcnow() + timedelta(minutes=10)
+            
+            EmailVerificationToken.query.filter_by(email=form.email.data, verified=False).delete()
+            
+            password_hash = generate_password_hash(form.password.data)
+            
+            verification_token = EmailVerificationToken(
+                email=form.email.data,
+                username=form.username.data,
+                password_hash=password_hash,
+                otp_code=otp_code,
+                expires_at=expires_at
+            )
+            db.session.add(verification_token)
             db.session.commit()
-
-            # Set up 2FA
-            user.otp_secret = generate_otp_secret()
-            db.session.commit()
-
-            # Store user ID in session for 2FA setup
-            session['setup_user_id'] = user.id
-            flash('Registration successful! Please set up two-factor authentication.', 'success')
-            return redirect(url_for('setup_2fa'))
+            
+            from .utils.email_helpers import send_email_verification_otp
+            email_sent = send_email_verification_otp(form.email.data, otp_code, form.username.data)
+            
+            if email_sent:
+                session['verification_email'] = form.email.data
+                flash('A verification code has been sent to your email. Please verify your email to continue.', 'success')
+                return redirect(url_for('verify_email'))
+            else:
+                flash('Unable to send verification email. Please check your email address and try again.', 'danger')
 
         return render_template('auth/register.html', title='Register', form=form)
+
+    @app.route('/verify-email', methods=['GET', 'POST'])
+    def verify_email():
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+        
+        email = session.get('verification_email')
+        if not email:
+            flash('Please register first.', 'warning')
+            return redirect(url_for('register'))
+        
+        form = EmailVerificationForm()
+        if form.validate_on_submit():
+            token = EmailVerificationToken.query.filter_by(
+                email=email,
+                otp_code=form.otp.data,
+                verified=False
+            ).first()
+            
+            if token and token.is_valid():
+                existing_user = User.query.filter(
+                    (User.email == token.email) | (User.username == token.username)
+                ).first()
+                
+                if existing_user:
+                    flash('This email or username is already registered. Please login or use different credentials.', 'danger')
+                    return redirect(url_for('register'))
+                
+                user = User(
+                    username=token.username,
+                    email=token.email,
+                    password_hash=token.password_hash
+                )
+                user.set_access_based_on_domain()
+                db.session.add(user)
+                
+                token.verified = True
+                db.session.commit()
+                
+                user.otp_secret = generate_otp_secret()
+                db.session.commit()
+                
+                session.pop('verification_email', None)
+                session['setup_user_id'] = user.id
+                
+                flash('Email verified successfully! Now please set up two-factor authentication.', 'success')
+                return redirect(url_for('setup_2fa'))
+            else:
+                flash('Invalid or expired verification code. Please try again.', 'danger')
+        
+        return render_template('auth/verify_email.html', title='Verify Email', form=form, email=email)
+
+    @app.route('/resend-verification')
+    def resend_verification():
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+        
+        email = session.get('verification_email')
+        if not email:
+            flash('Please register first.', 'warning')
+            return redirect(url_for('register'))
+        
+        token = EmailVerificationToken.query.filter_by(email=email, verified=False).first()
+        if not token:
+            flash('Please register again.', 'warning')
+            return redirect(url_for('register'))
+        
+        otp_code = EmailVerificationToken.generate_otp()
+        expires_at = datetime.utcnow() + timedelta(minutes=10)
+        
+        token.otp_code = otp_code
+        token.expires_at = expires_at
+        db.session.commit()
+        
+        from .utils.email_helpers import send_email_verification_otp
+        email_sent = send_email_verification_otp(email, otp_code, token.username)
+        
+        if email_sent:
+            flash('A new verification code has been sent to your email.', 'success')
+        else:
+            flash('Unable to send verification email. Please try again later.', 'danger')
+        
+        return redirect(url_for('verify_email'))
 
     @app.route('/setup-2fa', methods=['GET', 'POST'])
     def setup_2fa():
@@ -2426,3 +2523,111 @@ def register_routes(app):
                                assignment=assignment,
                                attempt=attempt,
                                question_results=question_results)
+
+    @app.route('/admin/send-course-reminders', methods=['POST'])
+    @login_required
+    def admin_send_course_reminders():
+        """Admin route to manually trigger 7-day reminder emails for mandatory courses"""
+        if not current_user.is_admin:
+            abort(403)
+        
+        reminders_sent = check_and_send_mandatory_course_reminders()
+        flash(f'Sent {reminders_sent} reminder email(s) for mandatory courses.', 'success')
+        return redirect(url_for('admin_mandatory_courses'))
+
+
+def check_and_send_mandatory_course_reminders():
+    """Check for mandatory courses with 7 days or less remaining and send reminder emails"""
+    from .utils.email_helpers import send_mandatory_course_reminder_email
+    from sqlalchemy import and_
+    
+    reminders_sent = 0
+    now = datetime.utcnow()
+    seven_days_from_now = now + timedelta(days=7)
+    
+    mandatory_courses = MandatoryCourse.query.filter(
+        and_(
+            MandatoryCourse.deadline != None,
+            MandatoryCourse.deadline > now,
+            MandatoryCourse.deadline <= seven_days_from_now
+        )
+    ).all()
+    
+    for mc in mandatory_courses:
+        if mc.user_id:
+            users = [User.query.get(mc.user_id)]
+        else:
+            users = User.query.filter_by(is_admin=False, is_approved=True).all()
+        
+        course = Course.query.get(mc.course_id)
+        if not course:
+            continue
+        
+        for user in users:
+            if not user:
+                continue
+            
+            existing_reminder = MandatoryCourseReminder.query.filter_by(
+                mandatory_course_id=mc.id,
+                user_id=user.id,
+                reminder_type='7_day'
+            ).first()
+            
+            if existing_reminder:
+                continue
+            
+            user_completed = has_user_completed_course(user.id, mc.course_id)
+            if user_completed:
+                continue
+            
+            days_remaining = (mc.deadline - now).days
+            
+            if send_mandatory_course_reminder_email(
+                user.email,
+                user.username,
+                course.title,
+                days_remaining,
+                mc.deadline
+            ):
+                reminder = MandatoryCourseReminder(
+                    mandatory_course_id=mc.id,
+                    user_id=user.id,
+                    reminder_type='7_day'
+                )
+                db.session.add(reminder)
+                db.session.commit()
+                reminders_sent += 1
+    
+    return reminders_sent
+
+
+def has_user_completed_course(user_id, course_id):
+    """Check if a user has completed a course (all lessons + passed assignment if required)"""
+    course = Course.query.get(course_id)
+    if not course:
+        return False
+    
+    lessons = Lesson.query.filter_by(course_id=course_id).all()
+    if not lessons:
+        return True
+    
+    completed_lessons = 0
+    for lesson in lessons:
+        progress = UserLessonProgress.query.filter_by(
+            user_id=user_id,
+            lesson_id=lesson.id
+        ).first()
+        if progress and progress.status == 'completed':
+            completed_lessons += 1
+    
+    lessons_completed = (completed_lessons == len(lessons))
+    
+    assignments = Assignment.query.filter_by(course_id=course_id, is_active=True).all()
+    if not assignments:
+        return lessons_completed
+    
+    for assignment in assignments:
+        if assignment.user_has_passed(user_id):
+            return True
+    
+    return False
