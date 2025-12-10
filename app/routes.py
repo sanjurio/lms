@@ -772,6 +772,9 @@ def register_routes(app):
             user_id=current_user.id,
             lesson_id=lesson.id
         ).order_by(UserNote.created_at.desc()).all()
+        
+        # Get lesson media items (videos, files, links)
+        media_items = LessonMedia.query.filter_by(lesson_id=lesson.id).order_by(LessonMedia.order).all()
 
         return render_template('user/lesson.html',
                                title=lesson.title,
@@ -781,7 +784,8 @@ def register_routes(app):
                                next_lesson=next_lesson,
                                can_view_content=can_view_content,
                                lesson_progress=lesson_progress,
-                               user_notes=user_notes)
+                               user_notes=user_notes,
+                               media_items=media_items)
 
     # Admin routes for managing interests
     @app.route('/admin/interests/add', methods=['GET', 'POST'])
