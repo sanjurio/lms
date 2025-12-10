@@ -9,7 +9,8 @@ from .models import (User, Course, Lesson, Interest, UserInterest,
                     CourseInterest, UserCourse, ForumTopic, ForumReply,
                     UserLessonProgress, UserNote, UserBookmark, UserActivity,
                     MandatoryCourse, Assignment, Question, UserAssignmentAttempt,
-                    PasswordResetToken)
+                    PasswordResetToken, LessonMedia)
+from werkzeug.utils import secure_filename
 from .forms import (LoginForm, RegistrationForm, TwoFactorForm,
                    SetupTwoFactorForm, InterestSelectionForm, UserApprovalForm,
                    CourseForm, LessonForm, InterestForm,
@@ -1176,7 +1177,8 @@ def register_routes(app):
         form.video_url.data = lesson.video_url
         form.order.data = lesson.order
 
-        return render_template('admin/edit_lesson.html', title='Edit Lesson', form=form, lesson=lesson, course=lesson.course)
+        media_items = LessonMedia.query.filter_by(lesson_id=lesson.id).order_by(LessonMedia.order).all()
+        return render_template('admin/edit_lesson.html', title='Edit Lesson', form=form, lesson=lesson, course=lesson.course, media_items=media_items)
 
     @app.route('/admin/lessons/<int:lesson_id>/delete', methods=['POST'])
     @login_required
@@ -1190,6 +1192,201 @@ def register_routes(app):
         db.session.commit()
         flash('Lesson deleted successfully!', 'success')
         return redirect(url_for('admin_lessons', course_id=course_id))
+
+    @app.route('/api/lessons/<int:lesson_id>/media', methods=['GET'])
+    @login_required
+    def get_lesson_media(lesson_id):
+        if not current_user.is_admin:
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        media_items = LessonMedia.query.filter_by(lesson_id=lesson_id).order_by(LessonMedia.order).all()
+        return jsonify({
+            'media': [{
+                'id': m.id,
+                'media_type': m.media_type,
+                'title': m.title,
+                'url': m.url,
+                'file_name': m.file_name,
+                'file_size': m.get_file_size_display() if m.file_size else None,
+                'order': m.order
+            } for m in media_items]
+        })
+
+    @app.route('/api/lessons/<int:lesson_id>/media/youtube', methods=['POST'])
+    @login_required
+    def add_youtube_video(lesson_id):
+        if not current_user.is_admin:
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        lesson = Lesson.query.get_or_404(lesson_id)
+        data = request.get_json()
+        
+        if not data or not data.get('url'):
+            return jsonify({'error': 'YouTube URL is required'}), 400
+        
+        max_order = db.session.query(db.func.max(LessonMedia.order)).filter_by(lesson_id=lesson_id).scalar() or 0
+        
+        media = LessonMedia(
+            lesson_id=lesson_id,
+            media_type='youtube',
+            title=data.get('title', 'YouTube Video'),
+            url=data['url'],
+            order=max_order + 1
+        )
+        db.session.add(media)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'media': {
+                'id': media.id,
+                'media_type': media.media_type,
+                'title': media.title,
+                'url': media.url,
+                'embed_url': media.get_youtube_embed_url(),
+                'order': media.order
+            }
+        })
+
+    @app.route('/api/lessons/<int:lesson_id>/media/link', methods=['POST'])
+    @login_required
+    def add_external_link(lesson_id):
+        if not current_user.is_admin:
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        lesson = Lesson.query.get_or_404(lesson_id)
+        data = request.get_json()
+        
+        if not data or not data.get('url'):
+            return jsonify({'error': 'URL is required'}), 400
+        
+        max_order = db.session.query(db.func.max(LessonMedia.order)).filter_by(lesson_id=lesson_id).scalar() or 0
+        
+        media = LessonMedia(
+            lesson_id=lesson_id,
+            media_type='link',
+            title=data.get('title', 'External Link'),
+            url=data['url'],
+            order=max_order + 1
+        )
+        db.session.add(media)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'media': {
+                'id': media.id,
+                'media_type': media.media_type,
+                'title': media.title,
+                'url': media.url,
+                'order': media.order
+            }
+        })
+
+    @app.route('/api/lessons/<int:lesson_id>/media/file', methods=['POST'])
+    @login_required
+    def upload_lesson_file(lesson_id):
+        if not current_user.is_admin:
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        lesson = Lesson.query.get_or_404(lesson_id)
+        
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        allowed_extensions = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'rar', 'png', 'jpg', 'jpeg', 'gif'}
+        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+        
+        if ext not in allowed_extensions:
+            return jsonify({'error': f'File type not allowed. Allowed: {", ".join(allowed_extensions)}'}), 400
+        
+        filename = secure_filename(file.filename)
+        unique_filename = f"{lesson_id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{filename}"
+        
+        upload_folder = os.path.join(app.static_folder, 'uploads', 'lessons')
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        file_path = os.path.join(upload_folder, unique_filename)
+        file.save(file_path)
+        
+        file_size = os.path.getsize(file_path)
+        
+        max_order = db.session.query(db.func.max(LessonMedia.order)).filter_by(lesson_id=lesson_id).scalar() or 0
+        
+        media = LessonMedia(
+            lesson_id=lesson_id,
+            media_type='file',
+            title=request.form.get('title', filename),
+            file_path=f'uploads/lessons/{unique_filename}',
+            file_name=filename,
+            file_size=file_size,
+            order=max_order + 1
+        )
+        db.session.add(media)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'media': {
+                'id': media.id,
+                'media_type': media.media_type,
+                'title': media.title,
+                'file_name': media.file_name,
+                'file_size': media.get_file_size_display(),
+                'order': media.order
+            }
+        })
+
+    @app.route('/api/lessons/media/<int:media_id>', methods=['DELETE'])
+    @login_required
+    def delete_lesson_media(media_id):
+        if not current_user.is_admin:
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        media = LessonMedia.query.get_or_404(media_id)
+        
+        if media.media_type == 'file' and media.file_path:
+            file_path = os.path.join(app.static_folder, media.file_path)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        
+        db.session.delete(media)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+
+    @app.route('/api/lessons/media/<int:media_id>', methods=['PUT'])
+    @login_required
+    def update_lesson_media(media_id):
+        if not current_user.is_admin:
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        media = LessonMedia.query.get_or_404(media_id)
+        data = request.get_json()
+        
+        if data.get('title'):
+            media.title = data['title']
+        if data.get('url') and media.media_type in ['youtube', 'link']:
+            media.url = data['url']
+        if data.get('order') is not None:
+            media.order = data['order']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'media': {
+                'id': media.id,
+                'media_type': media.media_type,
+                'title': media.title,
+                'url': media.url,
+                'order': media.order
+            }
+        })
 
     # Forum routes
     @app.route('/forum/new', methods=['GET', 'POST'])

@@ -544,3 +544,57 @@ class PasswordResetToken(db.Model):
         """Generate a 6-digit OTP"""
         import random
         return ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+
+class LessonMedia(db.Model):
+    """Store multiple media items (videos, files, links) for lessons"""
+    __tablename__ = 'lesson_media'
+    id = db.Column(db.Integer, primary_key=True)
+    lesson_id = db.Column(db.Integer, db.ForeignKey('lessons.id'), nullable=False)
+    media_type = db.Column(db.String(20), nullable=False)  # youtube, file, link
+    title = db.Column(db.String(200))
+    url = db.Column(db.String(1000))  # For YouTube URLs and external links
+    file_path = db.Column(db.String(500))  # For uploaded files
+    file_name = db.Column(db.String(255))  # Original file name
+    file_size = db.Column(db.Integer)  # File size in bytes
+    order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    lesson = db.relationship('Lesson', backref=db.backref('media_items', lazy='dynamic', cascade='all, delete-orphan'))
+    
+    def __repr__(self):
+        return f'<LessonMedia {self.media_type} for lesson {self.lesson_id}>'
+    
+    def get_youtube_embed_url(self):
+        """Convert YouTube URL to embed URL"""
+        if self.media_type != 'youtube' or not self.url:
+            return None
+        
+        url = self.url.strip()
+        video_id = None
+        
+        if 'youtu.be/' in url:
+            video_id = url.split('youtu.be/')[-1].split('?')[0]
+        elif 'youtube.com/watch' in url:
+            import re
+            match = re.search(r'v=([^&]+)', url)
+            if match:
+                video_id = match.group(1)
+        elif 'youtube.com/embed/' in url:
+            video_id = url.split('embed/')[-1].split('?')[0]
+        
+        if video_id:
+            return f'https://www.youtube.com/embed/{video_id}'
+        return url
+    
+    def get_file_size_display(self):
+        """Return human-readable file size"""
+        if not self.file_size:
+            return 'Unknown'
+        
+        size = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024:
+                return f'{size:.1f} {unit}'
+            size /= 1024
+        return f'{size:.1f} TB'
