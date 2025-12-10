@@ -2524,18 +2524,6 @@ def register_routes(app):
                                attempt=attempt,
                                question_results=question_results)
 
-    @app.route('/admin/send-course-reminders', methods=['POST'])
-    @login_required
-    def admin_send_course_reminders():
-        """Admin route to manually trigger 7-day reminder emails for mandatory courses"""
-        if not current_user.is_admin:
-            abort(403)
-        
-        reminders_sent = check_and_send_mandatory_course_reminders()
-        flash(f'Sent {reminders_sent} reminder email(s) for mandatory courses.', 'success')
-        return redirect(url_for('admin_mandatory_courses'))
-
-
 def check_and_send_mandatory_course_reminders():
     """Check for mandatory courses with 7 days or less remaining and send reminder emails"""
     from .utils.email_helpers import send_mandatory_course_reminder_email

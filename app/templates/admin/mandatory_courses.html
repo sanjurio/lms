@@ -24,12 +24,6 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="admin-section-title">Mandatory Course Assignments</h2>
             <div>
-                <form method="post" action="{{ url_for('admin_send_course_reminders') }}" style="display: inline;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-warning mr-2" onclick="return confirm('Send 7-day reminder emails to users with upcoming deadlines who have not completed their courses?')">
-                        <i class="fas fa-bell"></i> Send Reminders
-                    </button>
-                </form>
                 <a href="{{ url_for('admin_mandatory_completion') }}" class="btn btn-secondary mr-2">
                     <i class="fas fa-chart-bar"></i> View Completion Status
                 </a>
