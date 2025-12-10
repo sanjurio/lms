@@ -4,7 +4,16 @@
 A comprehensive Learning Management System (LMS) for Enterprise Erlang/OTP development training designed for telecom and distributed systems. The platform features domain-based access control, course management, user progress tracking, forum discussions, and document analysis capabilities.
 
 ## Recent Changes (December 10, 2025)
-- **Multi-Media Lesson Support**: Added comprehensive media management for lessons
+- **Inline Media Embedding**: Enhanced lesson editor with inline media insertion
+  - Added toolbar buttons to insert YouTube, OneDrive/external videos, files, and links directly in content
+  - Media can now be placed anywhere in the lesson (topics → video → topics → file pattern)
+  - Modal dialogs for entering YouTube URLs, embed codes, file selections, and external links
+  - Videos display inline where placed with responsive 16:9 aspect ratio
+  - File download links styled as interactive cards
+  - Auto-increment lesson order when adding new lessons
+  - After creating a lesson, redirects to edit page to immediately add media
+
+- **Multi-Media Lesson Support**: Comprehensive media management for lessons
   - LessonMedia model for storing YouTube videos, uploaded files, and external links
   - Admin UI with tabs for managing media (YouTube URLs with + button, file uploads, external links)
   - User lesson view displays all media types with proper categorization
