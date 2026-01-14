@@ -416,3 +416,52 @@ def send_mandatory_course_email(to_email, username, course_title, deadline=None,
         logger.error(f"Failed to send mandatory course email: {type(e).__name__}: {e}")
         logger.error(f"Traceback: {traceback.format_exc()}")
         return False
+
+
+def send_certificate_email(to_email, username, course_title, pdf_content):
+    """Send course completion certificate with PDF attachment"""
+    from email.mime.application import MIMEApplication
+    smtp_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
+    smtp_port = int(os.environ.get('SMTP_PORT', 587))
+    smtp_user = os.environ.get('SMTP_USER')
+    smtp_password = os.environ.get('SMTP_PASSWORD')
+    from_email = os.environ.get('SMTP_FROM_EMAIL', smtp_user)
+
+    if not smtp_user or not smtp_password:
+        logger.warning("SMTP credentials not configured - skipping certificate email")
+        return False
+
+    subject = f"Congratulations! Your Certificate for {course_title}"
+    
+    html_body = f"""
+    <html>
+    <body>
+        <h2>Congratulations {username}!</h2>
+        <p>You have successfully completed the course <strong>{course_title}</strong>.</p>
+        <p>Please find your certificate of completion attached to this email.</p>
+        <p>Best regards,<br>Erlang LMS Team</p>
+    </body>
+    </html>
+    """
+
+    try:
+        msg = MIMEMultipart()
+        msg['Subject'] = subject
+        msg['From'] = from_email
+        msg['To'] = to_email
+
+        msg.attach(MIMEText(html_body, 'html'))
+
+        part = MIMEApplication(pdf_content, Name=f"certificate.pdf")
+        part['Content-Disposition'] = f'attachment; filename="certificate.pdf"'
+        msg.attach(part)
+
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(from_email, to_email, msg.as_string())
+        
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send certificate email: {e}")
+        return False

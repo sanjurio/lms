@@ -77,6 +77,7 @@ class CourseForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired(), Length(max=200)])
     description = TextAreaField('Description', validators=[DataRequired()])
     cover_image_url = StringField('Cover Image URL', validators=[Length(max=500)])
+    issue_certificates = BooleanField('Issue Certificates for this course')
     interests = MultiCheckboxField('Interests', coerce=int)
     submit = SubmitField('Save Course')
 

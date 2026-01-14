@@ -69,6 +69,14 @@
                     </div>
                     <div class="form-text">Select Teams that are relevant to this course. Users with access to these Teams will be able to view the course.</div>
                 </div>
+
+                <div class="form-group">
+                    <div class="checkbox-item">
+                        {{ form.issue_certificates(id="issue_certificates") }}
+                        {{ form.issue_certificates.label(for="issue_certificates", class="form-label") }}
+                    </div>
+                    <div class="form-text">If enabled, users will be able to download a certificate upon course completion.</div>
+                </div>
                 
                 <div class="form-group">
                     {{ form.submit(class="btn btn-primary") }}
