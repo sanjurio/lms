@@ -70,16 +70,19 @@ def register_routes(app):
                 flash('Welcome, Administrator!', 'success')
                 return redirect(next_page)
 
+            # Check if user has 2FA enabled globally or for this user
+            if not user.is_2fa_enabled:
+                login_user(user, remember=form.remember_me.data)
+                next_page = request.args.get('next')
+                if not next_page or urlparse(next_page).netloc != '':
+                    next_page = url_for('index')
+                flash('Welcome back!', 'success')
+                return redirect(next_page)
+
             # Check if user has 2FA configured
             if not user.otp_secret:
                 flash('Your account is missing 2FA configuration. Please contact an administrator.', 'danger')
                 return render_template('auth/login.html', title='Sign In', form=form)
-
-            # Check if user has completed 2FA setup
-            if not user.is_2fa_enabled:
-                session['setup_user_id'] = user.id
-                flash('Please complete your two-factor authentication setup.', 'info')
-                return redirect(url_for('setup_2fa'))
 
             # Store user info in session for 2FA verification
             session['user_id'] = user.id
