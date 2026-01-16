@@ -2286,6 +2286,7 @@ def register_routes(app):
                 assignment.time_limit_minutes = form.time_limit_minutes.data if form.time_limit_minutes.data and form.time_limit_minutes.data > 0 else None
                 assignment.max_attempts = form.max_attempts.data
                 assignment.shuffle_questions = form.shuffle_questions.data
+                assignment.shuffle_options = form.shuffle_options.data
                 assignment.is_active = form.is_active.data
                 db.session.commit()
                 flash('Assignment updated successfully!', 'success')
@@ -2490,14 +2491,32 @@ def register_routes(app):
         # Initialize answers and question order if not already done
         answers = json.loads(attempt.answers) if attempt.answers else {}
         
-        # We store the question order in the session for this attempt
+        # We store the question order and option mappings in the session for this attempt
         session_key = f'assignment_order_{attempt.id}'
+        options_key = f'assignment_options_{attempt.id}'
+        
         if session_key not in session:
             q_ids = [q.id for q in questions]
             if assignment.shuffle_questions:
                 import random
                 random.shuffle(q_ids)
             session[session_key] = q_ids
+            
+            # Store shuffled option mappings if shuffle_options is enabled
+            if assignment.shuffle_options:
+                option_mappings = {}
+                for q in questions:
+                    orig_options = q.get_options() # List of ('A', text), ('B', text), etc.
+                    import random
+                    shuffled_vals = [opt[1] for opt in orig_options]
+                    random.shuffle(shuffled_vals)
+                    # Map new letters to original values
+                    mapping = {}
+                    for i, val in enumerate(shuffled_vals):
+                        new_letter = chr(65 + i) # A, B, C, D
+                        mapping[new_letter] = val
+                    option_mappings[str(q.id)] = mapping
+                session[options_key] = option_mappings
         
         ordered_q_ids = session[session_key]
         
@@ -2514,10 +2533,34 @@ def register_routes(app):
             flash('Question not found.', 'danger')
             return redirect(url_for('view_course', course_id=assignment.course_id))
 
+        # Get the options for this question (shuffled or original)
+        if assignment.shuffle_options and options_key in session:
+            mapping = session[options_key].get(str(current_q_id))
+            if mapping:
+                display_options = sorted(mapping.items()) # List of ('A', text), ('B', text), etc.
+            else:
+                display_options = current_question.get_options()
+        else:
+            display_options = current_question.get_options()
+
         if request.method == 'POST':
-            answer = request.form.get(f'question_{current_q_id}')
-            if answer:
-                answers[str(current_q_id)] = answer
+            display_answer = request.form.get(f'question_{current_q_id}')
+            if display_answer:
+                # If shuffled, we need to map the chosen letter back to the original content
+                # then find which original letter (A, B, C, D) that content belonged to
+                final_answer = display_answer
+                if assignment.shuffle_options and options_key in session:
+                    mapping = session[options_key].get(str(current_q_id))
+                    if mapping:
+                        selected_text = mapping.get(display_answer)
+                        # Find which original letter had this text
+                        orig_options = current_question.get_options()
+                        for orig_letter, orig_text in orig_options:
+                            if orig_text == selected_text:
+                                final_answer = orig_letter
+                                break
+                
+                answers[str(current_q_id)] = final_answer
                 attempt.answers = json.dumps(answers)
                 db.session.commit()
             
@@ -2548,9 +2591,10 @@ def register_routes(app):
                                assignment=assignment,
                                attempt=attempt,
                                question=current_question,
+                               display_options=display_options,
                                q_idx=q_idx,
                                total_q=len(ordered_q_ids),
-                               user_answer=answers.get(str(current_q_id)))
+                               user_answer=display_user_answer)
     
     @app.route('/attempts/<int:attempt_id>/result')
     @login_required
