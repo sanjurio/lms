@@ -834,6 +834,21 @@ def register_routes(app):
             if best_score is not None:
                 assignment_score = best_score
                 assignment_passed = best_score >= course_assignment.passing_score
+        
+        # Course completion logic
+        # If there's an assignment, it must be passed AND lessons must be 100%
+        # If no assignment, just lessons must be 100%
+        is_completed = False
+        if course_assignment:
+            is_completed = (course_progress['percentage'] == 100) and assignment_passed
+        else:
+            is_completed = (course_progress['percentage'] == 100)
+
+        # Update enrollment completion status
+        enrollment = UserCourse.query.filter_by(user_id=current_user.id, course_id=course_id).first()
+        if enrollment and enrollment.completed != is_completed:
+            enrollment.completed = is_completed
+            db.session.commit()
 
         return render_template('user/course.html',
                                title=course.title,
@@ -844,7 +859,8 @@ def register_routes(app):
                                is_mandatory=is_mandatory,
                                course_assignment=course_assignment,
                                assignment_passed=assignment_passed,
-                               assignment_score=assignment_score)
+                               assignment_score=assignment_score,
+                               is_completed=is_completed)
 
     @app.route('/lessons/<int:lesson_id>')
     @login_required
