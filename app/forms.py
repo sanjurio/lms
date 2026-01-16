@@ -167,6 +167,7 @@ class AssignmentForm(FlaskForm):
     passing_score = IntegerField('Passing Score (%)', default=70)
     time_limit_minutes = IntegerField('Time Limit (minutes)', default=0)
     max_attempts = IntegerField('Max Attempts (0 = unlimited)', default=0)
+    shuffle_questions = BooleanField('Shuffle Questions')
     is_active = BooleanField('Active', default=True)
     submit = SubmitField('Save Assignment')
 

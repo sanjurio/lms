@@ -516,6 +516,14 @@
                                 {{ form.max_attempts(class="form-control", min=0, placeholder="0") }}
                                 <div class="helper-text">0 = unlimited retries</div>
                             </div>
+
+                            <div class="toggle-setting mt-3">
+                                <div class="toggle-label">
+                                    <i class="fas fa-random text-purple me-1"></i>
+                                    <span>Shuffle Questions</span>
+                                </div>
+                                {{ form.shuffle_questions(class="form-check-input", style="width: 46px; height: 24px;") }}
+                            </div>
                         </div>
 
                         <div class="form-section">

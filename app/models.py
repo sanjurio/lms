@@ -437,6 +437,7 @@ class Assignment(db.Model):
     passing_score = db.Column(db.Integer, default=70)  # Percentage required to pass
     time_limit_minutes = db.Column(db.Integer, nullable=True)  # Optional time limit
     max_attempts = db.Column(db.Integer, default=0)  # 0 means unlimited attempts
+    shuffle_questions = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)

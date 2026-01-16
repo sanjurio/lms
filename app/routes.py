@@ -2462,48 +2462,78 @@ def register_routes(app):
     @login_required
     def take_assignment(attempt_id):
         attempt = UserAssignmentAttempt.query.get_or_404(attempt_id)
-        
         if attempt.user_id != current_user.id:
             abort(403)
-        
         if attempt.completed_at:
             return redirect(url_for('assignment_result', attempt_id=attempt.id))
         
         assignment = attempt.assignment
         questions = Question.query.filter_by(assignment_id=assignment.id).order_by(Question.order).all()
         
-        if request.method == 'POST':
-            answers = {}
-            correct_count = 0
-            total_points = 0
-            earned_points = 0
-            
-            for question in questions:
-                answer = request.form.get(f'question_{question.id}')
-                q_points = question.points if question.points else 1
-                if answer:
-                    answers[str(question.id)] = answer
-                    total_points += q_points
-                    if question.is_correct(answer):
-                        correct_count += 1
-                        earned_points += q_points
-                else:
-                    total_points += q_points
-            
-            score = round((earned_points / total_points * 100) if total_points > 0 else 0)
-            
-            attempt.answers = json.dumps(answers)
-            attempt.score = score
-            attempt.completed_at = datetime.utcnow()
-            db.session.commit()
-            
-            return redirect(url_for('assignment_result', attempt_id=attempt.id))
+        # Initialize answers and question order if not already done
+        answers = json.loads(attempt.answers) if attempt.answers else {}
         
+        # We store the question order in the session for this attempt
+        session_key = f'assignment_order_{attempt.id}'
+        if session_key not in session:
+            q_ids = [q.id for q in questions]
+            if assignment.shuffle_questions:
+                import random
+                random.shuffle(q_ids)
+            session[session_key] = q_ids
+        
+        ordered_q_ids = session[session_key]
+        
+        # Get current question index from URL
+        q_idx = request.args.get('q', 0, type=int)
+        if q_idx < 0: q_idx = 0
+        if q_idx >= len(ordered_q_ids):
+            q_idx = len(ordered_q_ids) - 1
+            
+        current_q_id = ordered_q_ids[q_idx]
+        current_question = next((q for q in questions if q.id == current_q_id), None)
+        
+        if not current_question:
+            flash('Question not found.', 'danger')
+            return redirect(url_for('view_course', course_id=assignment.course_id))
+
+        if request.method == 'POST':
+            answer = request.form.get(f'question_{current_q_id}')
+            if answer:
+                answers[str(current_q_id)] = answer
+                attempt.answers = json.dumps(answers)
+                db.session.commit()
+            
+            # Navigate to next question or result
+            next_idx = q_idx + 1
+            if next_idx < len(ordered_q_ids):
+                return redirect(url_for('take_assignment', attempt_id=attempt.id, q=next_idx))
+            else:
+                # Calculate final score and complete attempt
+                total_points = 0
+                earned_points = 0
+                for q in questions:
+                    q_points = q.points or 1
+                    total_points += q_points
+                    user_ans = answers.get(str(q.id))
+                    if user_ans and q.is_correct(user_ans):
+                        earned_points += q_points
+                
+                score = round((earned_points / total_points * 100) if total_points > 0 else 0)
+                attempt.score = score
+                attempt.completed_at = datetime.utcnow()
+                db.session.commit()
+                session.pop(session_key, None)
+                return redirect(url_for('assignment_result', attempt_id=attempt.id))
+
         return render_template('user/take_assignment.html',
                                title=assignment.title,
                                assignment=assignment,
                                attempt=attempt,
-                               questions=questions)
+                               question=current_question,
+                               q_idx=q_idx,
+                               total_q=len(ordered_q_ids),
+                               user_answer=answers.get(str(current_q_id)))
     
     @app.route('/attempts/<int:attempt_id>/result')
     @login_required
