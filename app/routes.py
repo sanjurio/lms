@@ -2269,6 +2269,7 @@ def register_routes(app):
                 assignment.passing_score = form.passing_score.data
                 assignment.time_limit_minutes = form.time_limit_minutes.data if form.time_limit_minutes.data and form.time_limit_minutes.data > 0 else None
                 assignment.max_attempts = form.max_attempts.data
+                assignment.shuffle_questions = form.shuffle_questions.data
                 assignment.is_active = form.is_active.data
                 db.session.commit()
                 flash('Assignment updated successfully!', 'success')
