@@ -2543,6 +2543,24 @@ def register_routes(app):
         else:
             display_options = current_question.get_options()
 
+        # Find what the current answer looks like in the UI
+        display_user_answer = None
+        user_answer_content = answers.get(str(current_q_id))
+        if user_answer_content:
+            if assignment.shuffle_options and options_key in session:
+                mapping = session[options_key].get(str(current_q_id))
+                if mapping:
+                    # Find which display letter (A, B, C, D) currently has the original answer's text
+                    orig_options = current_question.get_options()
+                    orig_text = next((opt[1] for opt in orig_options if opt[0] == user_answer_content), None)
+                    if orig_text:
+                        for disp_letter, disp_text in mapping.items():
+                            if disp_text == orig_text:
+                                display_user_answer = disp_letter
+                                break
+            else:
+                display_user_answer = user_answer_content
+
         if request.method == 'POST':
             display_answer = request.form.get(f'question_{current_q_id}')
             if display_answer:
@@ -2584,6 +2602,7 @@ def register_routes(app):
                 attempt.completed_at = datetime.utcnow()
                 db.session.commit()
                 session.pop(session_key, None)
+                session.pop(options_key, None)
                 return redirect(url_for('assignment_result', attempt_id=attempt.id))
 
         return render_template('user/take_assignment.html',
