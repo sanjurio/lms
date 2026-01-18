@@ -63,7 +63,7 @@ class User(UserMixin, db.Model):
             self.email_domain = domain
             
             access_info = get_domain_access_info(self.email)
-            self.access_level = access_info['access_level']
+            self.access_level = access_info.get('access_level', 'basic')
             self.is_approved = False  # Always require admin approval
     
     def can_view_videos(self):
