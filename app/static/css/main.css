@@ -1,9 +1,17 @@
 /* Custom Styles for AI Learning Platform */
 
 /* Bootstrap Dark Theme Compatibility */
-body {
+[data-bs-theme="dark"] body {
   color: rgba(255, 255, 255, 0.9);
   background: linear-gradient(135deg, #121212 0%, #1e1e2d 100%);
+}
+
+[data-bs-theme="light"] body {
+  color: #333;
+  background: #f8f9fa;
+}
+
+body {
   min-height: 100vh;
 }
 
