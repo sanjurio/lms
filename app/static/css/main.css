@@ -178,39 +178,50 @@ body {
     color: var(--text-muted);
 }
 
-/* Footer styles */
-footer {
+/* Footer styles - COMPLETELY FORCED */
+footer.mt-5, [data-bs-theme="light"] footer.mt-5, [data-bs-theme="dark"] footer.mt-5 {
   background-color: var(--footer-bg) !important;
   color: var(--footer-text) !important;
-  border-top: 1px solid var(--border-color);
-  padding: 2rem 0;
-  transition: var(--transition);
+  display: block !important;
+  position: relative !important;
+  z-index: 10 !important;
 }
 
-.footer-title, .footer-text, .footer-copyright {
+.footer-title, .footer-text, .footer-copyright, footer h3, footer p, [data-bs-theme="light"] .footer-title, [data-bs-theme="light"] .footer-text {
   color: var(--footer-text) !important;
 }
 
-.footer-link {
+.footer-link, footer a, [data-bs-theme="light"] .footer-link {
   color: var(--footer-text) !important;
-  text-decoration: none;
-  opacity: 0.8;
-  transition: var(--transition);
+  text-decoration: none !important;
+  opacity: 0.9 !important;
 }
 
-.footer-link:hover {
-  opacity: 1;
+[data-bs-theme="light"] {
+  --footer-bg: #f8fafc !important;
+  --footer-text: #1e293b !important;
+  --bg-color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] {
+  --footer-bg: #0f172a !important;
+  --footer-text: #ffffff !important;
+  --bg-color: #0f172a !important;
+}
+
+.footer-link:hover, footer a:hover {
+  opacity: 1 !important;
   color: var(--primary-color) !important;
 }
 
 [data-bs-theme="light"] {
-  --footer-bg: #f8fafc;
-  --footer-text: #1e293b;
+  --footer-bg: #f8fafc !important;
+  --footer-text: #1e293b !important;
 }
 
 [data-bs-theme="dark"] {
-  --footer-bg: #0f172a;
-  --footer-text: #ffffff;
+  --footer-bg: #0f172a !important;
+  --footer-text: #ffffff !important;
 }
 
 /* User Progress Cards Fix */
