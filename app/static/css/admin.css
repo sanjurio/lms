@@ -1,5 +1,19 @@
 /* Admin-specific styles for AI Learning Platform */
 
+:root {
+  --admin-bg: var(--bg-color, #f8f9fa);
+  --admin-card-bg: var(--card-bg, #ffffff);
+  --admin-text: var(--text-color, #1e293b);
+  --admin-border: var(--border-color, #e2e8f0);
+}
+
+[data-bs-theme="dark"] {
+  --admin-bg: #0f172a;
+  --admin-card-bg: #1e293b;
+  --admin-text: #f1f5f9;
+  --admin-border: #334155;
+}
+
 /* Admin dashboard cards */
 .admin-stats {
   display: grid;
@@ -9,8 +23,9 @@
 }
 
 .stat-card {
-  background-color: var(--bs-dark);
-  color: var(--bs-white);
+  background-color: var(--admin-card-bg);
+  color: var(--admin-text);
+  border: 1px solid var(--admin-border);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   padding: 1.5rem;
@@ -20,123 +35,27 @@
 
 .stat-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
-}
-
-.stat-card:nth-child(1) {
-  border-top: 3px solid var(--bs-primary);
-}
-
-.stat-card:nth-child(2) {
-  border-top: 3px solid var(--bs-success);
-}
-
-.stat-card:nth-child(3) {
-  border-top: 3px solid var(--bs-warning);
-}
-
-.stat-card:nth-child(4) {
-  border-top: 3px solid var(--bs-danger);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
 }
 
 .stat-value {
   font-size: 2.5rem;
   font-weight: bold;
   margin: 1rem 0;
-  color: var(--bs-white);
+  color: var(--primary-color);
 }
 
 .stat-label {
   font-size: 1rem;
-  color: var(--bs-gray-300);
+  color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
 
-/* Admin navigation */
-
-.admin-nav {
-  background-color: var(--bs-gray-800);
-  border-radius: var(--border-radius);
-  margin-bottom: 2rem;
-}
-
-/* Row of tabs */
-.admin-nav ul {
-  display: flex;
-  list-style: none;
-  padding: 0;
-  margin: 0;                 /* ensure no extra gaps */
-  /* no overflow-x: auto;  --> removed as requested */
-}
-
-/* Each tab takes equal width */
-.admin-nav li {
-  flex: 1 1 0;               /* equal widths */
-  min-width: 0;              /* allows text-overflow to work inside flex items */
-  text-align: center;
-}
-
-/* Anchor becomes a flex box to center text vertically/horizontally */
-.admin-nav a {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  /* visual spacing; can be tuned */
-  padding: 1rem .75rem;
-
-  /* theme */
-  color: var(--bs-gray-300);
-  text-decoration: none;
-  transition: var(--transition);
-  border-bottom: 3px solid transparent;
-
-  /* alignment helpers */
-  white-space: nowrap;       /* keep on one line */
-  overflow: hidden;          /* allow ellipsis if needed */
-  text-overflow: ellipsis;   /* prevents wrap when space is tight */
-}
-
-.admin-nav a:hover,
-.admin-nav a.active {
-  background-color: var(--bs-gray-700);
-  color: var(--bs-white);
-  border-bottom-color: var(--bs-primary);
-}
-
-/* Mobile: stacked list stays single-line for each item */
-@media (max-width: 768px) {
-  .admin-nav ul {
-    flex-direction: column;
-  }
-
-  .admin-nav a {
-    justify-content: flex-start; /* left-align label on mobile */
-    text-align: left;
-    border-left: 3px solid transparent;
-    border-bottom: none;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .admin-nav a:hover,
-  .admin-nav a.active {
-    border-left-color: var(--bs-primary);
-    border-bottom-color: transparent;
-  }
-}
-
-
-/* Action buttons */
-.action-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-
+/* Admin container */
 .admin-container {
-  background-color: var(--bs-dark);
-  color: var(--bs-white);
+  background-color: var(--admin-card-bg);
+  color: var(--admin-text);
+  border: 1px solid var(--admin-border);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   padding: 2rem;
@@ -146,9 +65,42 @@
 .admin-section-title {
   margin-bottom: 1.5rem;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--bs-gray-700);
+  border-bottom: 2px solid var(--admin-border);
   font-size: 1.5rem;
-  color: var(--bs-info);
+  color: var(--primary-color);
+}
+
+/* Universal table style */
+.user-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.user-table th {
+  background-color: var(--admin-bg);
+  color: var(--admin-text);
+  padding: 1rem;
+  font-weight: 600;
+  border-bottom: 2px solid var(--admin-border);
+}
+
+.user-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--admin-border);
+  background-color: var(--admin-card-bg) !important;
+  color: var(--admin-text) !important;
+}
+
+.user-table tr:last-child td {
+  border-bottom: none;
+}
+
+.user-table tr:hover td {
+  background-color: var(--admin-bg) !important;
 }
 
 /* Tabs for admin panels */
