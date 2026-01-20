@@ -178,35 +178,39 @@ body {
     color: var(--text-muted);
 }
 
-/* Footer dynamic theme */
+/* Footer styles */
 footer {
   background-color: var(--footer-bg) !important;
   color: var(--footer-text) !important;
   border-top: 1px solid var(--border-color);
+  padding: 2rem 0;
   transition: var(--transition);
 }
 
-[data-bs-theme="light"] footer {
+.footer-title, .footer-text, .footer-copyright {
+  color: var(--footer-text) !important;
+}
+
+.footer-link {
+  color: var(--footer-text) !important;
+  text-decoration: none;
+  opacity: 0.8;
+  transition: var(--transition);
+}
+
+.footer-link:hover {
+  opacity: 1;
+  color: var(--primary-color) !important;
+}
+
+[data-bs-theme="light"] {
   --footer-bg: #f8fafc;
   --footer-text: #1e293b;
 }
 
-[data-bs-theme="dark"] footer {
+[data-bs-theme="dark"] {
   --footer-bg: #0f172a;
   --footer-text: #ffffff;
-}
-
-footer h3, footer p, footer a, footer .text-white, footer .list-inline-item a, footer .text-white-50, footer .text-white-50 a, footer .list-inline a {
-  color: var(--footer-text) !important;
-  opacity: 1 !important;
-}
-
-[data-bs-theme="light"] footer .text-white-50 {
-  color: #64748b !important;
-}
-
-footer a:hover {
-  color: var(--primary-color) !important;
 }
 
 /* User Progress Cards Fix */
