@@ -562,6 +562,24 @@ footer a:hover {
   box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.2);
 }
 
+/* Readonly and disabled states */
+.form-control[readonly], .form-control:disabled {
+  background-color: rgba(var(--text-muted-rgb), 0.1) !important;
+  color: var(--text-muted) !important;
+  cursor: not-allowed;
+  border-color: var(--border-color);
+}
+
+[data-bs-theme="light"] .form-control[readonly] {
+  background-color: #f1f5f9 !important;
+  color: #64748b !important;
+}
+
+[data-bs-theme="dark"] .form-control[readonly] {
+  background-color: #2d3748 !important;
+  color: #a0aec0 !important;
+}
+
 /* Proper spacing for form elements */
 .form-group {
   margin-bottom: 1.5rem;
