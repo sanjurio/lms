@@ -139,11 +139,11 @@
         <h4 class="mb-3"><i class="fas fa-book me-2"></i>Course Details</h4>
         
         {% for cp in course_progress %}
-        <div class="card progress-card">
-            <div class="card-header">
+        <div class="card progress-card shadow-sm">
+            <div class="card-header bg-transparent border-bottom">
                 <div class="course-progress-header">
                     <div>
-                        <h5 class="mb-0">{{ cp.course.title }}</h5>
+                        <h5 class="mb-0 fw-bold">{{ cp.course.title }}</h5>
                         <small class="text-muted">{{ cp.completed }}/{{ cp.total }} lessons completed</small>
                     </div>
                     <div>
@@ -156,58 +156,67 @@
                         {% endif %}
                     </div>
                 </div>
-                <div class="progress mt-2" style="height: 20px;">
+                <div class="progress mt-2" style="height: 12px; border-radius: 6px;">
                     <div class="progress-bar bg-success" role="progressbar" style="width: {{ cp.percentage }}%;">
                         {{ cp.percentage }}%
                     </div>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if cp.lessons %}
-                <table class="table table-hover mb-0 progress-lessons-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 40px;"></th>
-                            <th>Lesson</th>
-                            <th>Status</th>
-                            <th>Completed At</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for ld in cp.lessons %}
-                        <tr>
-                            <td class="lesson-status-icon">
-                                {% if ld.status == 'completed' %}
-                                <i class="fas fa-check-circle text-success"></i>
-                                {% elif ld.status == 'in_progress' %}
-                                <i class="fas fa-clock text-warning"></i>
-                                {% else %}
-                                <i class="far fa-circle text-muted"></i>
-                                {% endif %}
-                            </td>
-                            <td>{{ ld.lesson.order }}. {{ ld.lesson.title }}</td>
-                            <td>
-                                {% if ld.status == 'completed' %}
-                                <span class="badge bg-success">Completed</span>
-                                {% elif ld.status == 'in_progress' %}
-                                <span class="badge bg-warning text-dark">In Progress</span>
-                                {% else %}
-                                <span class="badge bg-secondary">Not Started</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if ld.completed_at %}
-                                {{ ld.completed_at.strftime('%d %b, %Y at %H:%M') }}
-                                {% else %}
-                                -
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 progress-lessons-table align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px;" class="ps-3">#</th>
+                                <th>Lesson</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-end pe-3">Completed At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ld in cp.lessons %}
+                            <tr>
+                                <td class="ps-3 fw-bold text-muted">{{ ld.lesson.order }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2">
+                                            {% if ld.status == 'completed' %}
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            {% elif ld.status == 'in_progress' %}
+                                            <i class="fas fa-clock text-warning"></i>
+                                            {% else %}
+                                            <i class="far fa-circle text-muted"></i>
+                                            {% endif %}
+                                        </span>
+                                        {{ ld.lesson.title }}
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    {% if ld.status == 'completed' %}
+                                    <span class="badge bg-success">Completed</span>
+                                    {% elif ld.status == 'in_progress' %}
+                                    <span class="badge bg-warning text-dark">In Progress</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Not Started</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-3">
+                                    {% if ld.completed_at %}
+                                    <small class="text-muted">{{ ld.completed_at.strftime('%d %b, %Y') }}</small>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 {% else %}
-                <p class="text-muted mb-0">No lessons in this course yet.</p>
+                <div class="p-4 text-center">
+                    <p class="text-muted mb-0">No lessons in this course yet.</p>
+                </div>
                 {% endif %}
             </div>
         </div>

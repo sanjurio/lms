@@ -985,10 +985,18 @@ input:checked + .slider:before {
 
 /* Card containers — remove white and unify tone */
 .card, .card-body, .card-header {
-  background: #0f172a !important;
-  color: #e2e8f0 !important;
-  border: none !important;
-  box-shadow: none !important;
+  background-color: var(--admin-card-bg) !important;
+  color: var(--admin-text) !important;
+  border: 1px solid var(--admin-border) !important;
+  box-shadow: var(--box-shadow) !important;
+}
+
+[data-bs-theme="light"] .card, 
+[data-bs-theme="light"] .card-body, 
+[data-bs-theme="light"] .card-header {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
 /* Remove white bar under "Select All" area */
@@ -1014,7 +1022,11 @@ input:checked + .slider:before {
 }
 
 .user-table thead {
-  background: #1e293b !important;
+  background-color: var(--secondary-color) !important;
+}
+
+[data-bs-theme="light"] .user-table thead {
+  background-color: #f8fafc !important;
 }
 
 .user-table thead th {
@@ -1025,7 +1037,7 @@ input:checked + .slider:before {
 }
 
 .user-table tbody tr {
-  background: #111827 !important;
+  background-color: transparent !important;
   transition: background 0.15s ease;
 }
 
