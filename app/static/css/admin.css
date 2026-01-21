@@ -716,7 +716,7 @@ input:checked + .slider:before {
 .kebab-dot {
   width: 5px;
   height: 5px;
-  background: #6b7280;  /* darker neutral gray */
+  background: var(--text-muted);  /* use theme variable for dots */
   border-radius: 50%;
   display: inline-block;
   transition: background 0.15s ease, transform 0.15s ease;
@@ -724,7 +724,7 @@ input:checked + .slider:before {
 
 /* Hover effect — brighter dots */
 .kebab-btn:hover .kebab-dot {
-  background: #f3f4f6;  /* light gray/white tone */
+  background: var(--primary-color);  /* highlight with primary color on hover */
   transform: scale(1.1);
 }
 
@@ -756,15 +756,15 @@ input:checked + .slider:before {
   top: calc(100% + 6px);
   right: 0;
   min-width: 180px;
-  background: #101827;
-  border: 1px solid rgba(255,255,255,0.05);
+  background: var(--admin-card-bg);
+  border: 1px solid var(--admin-border);
   border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--box-shadow);
   padding: 6px;
   display: none;
   flex-direction: column;
   font-size: 14px;
-  color: #e5e7eb;
+  color: var(--admin-text);
   transform-origin: top right;
   opacity: 0;
   transform: scale(0.95);
@@ -785,26 +785,26 @@ input:checked + .slider:before {
   gap: 10px;
   padding: 8px 12px;
   border-radius: 8px;
-  color: #e5e7eb;
+  color: var(--admin-text);
   text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .action-menu-row:hover {
-  background: rgba(255,255,255,0.05);
-  color: #fff;
+  background: var(--admin-bg);
+  color: var(--primary-color);
 }
 
 .menu-icon {
   font-size: 14px;
-  color: #9ca3af;
+  color: var(--text-muted);
   width: 16px;
   text-align: center;
 }
 
 .menu-separator {
   height: 1px;
-  background: rgba(255,255,255,0.08);
+  background: var(--admin-border);
   margin: 5px 0;
 }
 
@@ -820,7 +820,7 @@ input:checked + .slider:before {
   gap: 10px;
   padding: 8px 12px;
   border-radius: 8px;
-  color: #f87171;
+  color: var(--danger-color);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -863,7 +863,7 @@ input:checked + .slider:before {
   flex: 0 0 18px !important;
   width: 18px !important;
   text-align: center !important;
-  color: #9ca3af !important;
+  color: var(--text-muted) !important;
   line-height: 1 !important;
 }
 
@@ -881,8 +881,8 @@ input:checked + .slider:before {
 /* Keep hover/focus consistent */
 .action-menu-row:hover,
 .action-delete-form > .action-delete-btn:hover {
-  background: rgba(255,255,255,0.02) !important;
-  color: #fff !important;
+  background: var(--admin-bg) !important;
+  color: var(--primary-color) !important;
 }
 
 /* If some other library is forcing button height, nuke it */
@@ -900,26 +900,26 @@ input:checked + .slider:before {
 
 /* Make DELETE red and consistent with theme */
 .action-delete-form > .action-delete-btn {
-  color: #f87171 !important; /* light red text */
+  color: var(--danger-color) !important; /* using variable for red text */
   font-weight: 500;
 }
 
 /* Hover state — a bit darker background for contrast */
 .action-delete-form > .action-delete-btn:hover {
-  background: rgba(248, 113, 113, 0.12) !important; /* faint red tint */
-  color: #ef4444 !important; /* slightly deeper red */
+  background: rgba(239, 68, 68, 0.12) !important; /* faint red tint */
+  color: var(--danger-color) !important;
 }
 
 /* Optional: make the trash icon match */
 .action-delete-form .menu-icon {
-  color: #f87171 !important;
+  color: var(--danger-color) !important;
 }
 .action-delete-form > .action-delete-btn:hover .menu-icon {
-  color: #ef4444 !important;
+  color: var(--danger-color) !important;
 }
 
 .action-delete-btn:hover {
-  background: rgba(239,68,68,0.1);
+  background: rgba(239, 68, 68, 0.1);
   color: #fca5a5;
 }
 
