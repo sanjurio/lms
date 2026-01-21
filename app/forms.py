@@ -25,6 +25,12 @@ class RegistrationForm(FlaskForm):
         DataRequired(), 
         EqualTo('password', message='Passwords must match')
     ])
+    access_level = SelectField('Access Level', choices=[
+        (1, 'D1'),
+        (2, 'D2'),
+        (3, 'D3'),
+        (4, 'D4')
+    ], coerce=int, validators=[DataRequired()])
     submit = SubmitField('Register')
     
     def validate_username(self, username):
@@ -78,6 +84,12 @@ class CourseForm(FlaskForm):
     description = TextAreaField('Description', validators=[DataRequired()])
     cover_image_url = StringField('Cover Image URL', validators=[Length(max=500)])
     issue_certificates = BooleanField('Issue Certificates for this course')
+    required_level = SelectField('Required Access Level', choices=[
+        (1, 'D1'),
+        (2, 'D2'),
+        (3, 'D3'),
+        (4, 'D4')
+    ], coerce=int, validators=[DataRequired()])
     interests = MultiCheckboxField('Interests', coerce=int)
     submit = SubmitField('Save Course')
 

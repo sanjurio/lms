@@ -57,6 +57,10 @@ def user_can_access_course(user, course):
     if user.is_admin:
         return True
     
+    # Hierarchical level check: user level must be >= course required level
+    if (user.access_level or 1) < (course.required_level or 1):
+        return False
+    
     # First check domain-specific restrictions
     if course.is_thbs_restricted():
         # Only THBS domain users can access -thbs courses

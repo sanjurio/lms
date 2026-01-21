@@ -386,6 +386,7 @@ def register_routes(app):
 
         form = RegistrationForm()
         if form.validate_on_submit():
+            session['registration_access_level'] = form.access_level.data
             otp_code = EmailVerificationToken.generate_otp()
             expires_at = datetime.utcnow() + timedelta(minutes=10)
             
@@ -445,7 +446,8 @@ def register_routes(app):
                 user = User(
                     username=token.username,
                     email=token.email,
-                    password_hash=token.password_hash
+                    password_hash=token.password_hash,
+                    access_level=session.get('registration_access_level', 1)
                 )
                 user.set_access_based_on_domain()
                 db.session.add(user)

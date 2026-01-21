@@ -27,7 +27,7 @@ class User(UserMixin, db.Model):
     is_approved = db.Column(db.Boolean, default=False)
     otp_secret = db.Column(db.String(32))
     is_2fa_enabled = db.Column(db.Boolean, default=False)
-    access_level = db.Column(db.String(20), default='basic')  # basic, text_only, full_access
+    access_level = db.Column(db.Integer, default=1)  # 1=D1, 2=D2, 3=D3, 4=D4
     email_domain = db.Column(db.String(50))  # Store email domain for quick access
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -184,6 +184,7 @@ class Course(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     issue_certificates = db.Column(db.Boolean, default=False)
+    required_level = db.Column(db.Integer, default=1)  # 1=D1, 2=D2, 3=D3, 4=D4
     
     # Relationships with proper cascade delete
     lessons = db.relationship('Lesson', backref='course', lazy='dynamic', cascade='all, delete-orphan')
@@ -196,7 +197,7 @@ class Course(db.Model):
         return '-thbs' in self.title.lower()
     
     def user_can_access_course(self, user):
-        """Check if a user can access this course based on domain restrictions"""
+        """Check if a user can access this course based on level and domain restrictions"""
         if not user.is_authenticated or not user.is_approved:
             return False
             
@@ -204,13 +205,17 @@ class Course(db.Model):
         if user.is_admin:
             return True
             
+        # Hierarchical level check: user level must be >= course required level
+        if (user.access_level or 1) < (self.required_level or 1):
+            return False
+
         # Check if this is a THBS-restricted course
         if self.is_thbs_restricted():
             # Only THBS domain users can access -thbs courses
             return user.email_domain == 'thbs.com'
             
-        # For non-restricted courses, check regular interest-based access
-        return True  # Will be checked by existing interest-based logic
+        # For non-restricted courses, check regular interest-based logic
+        return True
     
     def __repr__(self):
         return f'<Course {self.title}>'

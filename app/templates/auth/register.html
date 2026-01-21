@@ -62,6 +62,16 @@
                             {% endfor %}
                         </div>
                     </div>
+
+                    <div class="mb-3">
+                        {{ form.access_level.label(class="form-label") }}
+                        {{ form.access_level(class="form-control") }}
+                        <div class="form-text text-danger">
+                            {% for error in form.access_level.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    </div>
                     
                     <div class="d-grid gap-2 mb-3">
                         {{ form.submit(class="btn btn-primary") }}
