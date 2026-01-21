@@ -522,15 +522,31 @@ input:checked + .slider:before {
 
 /* Bulk Actions Styling */
 .bulk-actions {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-radius: 5px;
-    border: 1px solid #dee2e6;
+    background-color: var(--admin-card-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--admin-border);
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: flex-start;
+    box-shadow: var(--box-shadow);
 }
 
-.bulk-actions .btn {
-    margin-right: 10px;
-    margin-bottom: 5px;
+[data-bs-theme="light"] .bulk-actions {
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-bs-theme="light"] .bulk-actions .btn-secondary {
+    background-color: #f1f5f9 !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-bs-theme="light"] .bulk-actions .btn-secondary:hover {
+    background-color: #e2e8f0 !important;
 }
 
 /* Checkbox styling */
@@ -1014,17 +1030,7 @@ input:checked + .slider:before {
   border: 1px solid #e2e8f0 !important;
 }
 
-/* Remove white bar under "Select All" area */
-.bulk-actions {
-  background: #1e293b !important;
-  border-radius: 8px;
-  padding: 0.8rem 1rem;
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  justify-content: flex-start;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
-}
+/* Remove white bar under "Select All" area - Handled by unified .bulk-actions block above */
 
 /* Make the table match dark theme */
 .user-table {
@@ -1117,20 +1123,7 @@ input:checked + .slider:before {
   filter: brightness(1.05);
   transform: translateY(-1px);
 }
-/* Remove the light border around bulk actions */
-.bulk-actions {
-  border: none !important;
-  outline: none !important;
-  background: #1e293b !important;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05); /* subtle edge glow */
-  border-radius: 8px;
-}
-
-/* Optional: if something else is wrapping it and causing the border */
-.card .bulk-actions {
-  border: none !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-}
+/* Remove the light border around bulk actions - Handled by unified .bulk-actions block above */
 
 
 
