@@ -371,6 +371,10 @@ footer.mt-5, [data-bs-theme="light"] footer.mt-5, [data-bs-theme="dark"] footer.
     background-color: #f1f5f9 !important;
 }
 
+[data-bs-theme="light"] .course-image {
+    filter: invert(0.1) brightness(1.2) contrast(0.8);
+}
+
 .course-image {
     max-width: 100%;
     max-height: 100%;
