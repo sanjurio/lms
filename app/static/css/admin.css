@@ -1030,7 +1030,7 @@ input:checked + .slider:before {
 }
 
 .user-table tbody tr:nth-child(even) {
-  background: #182030 !important;
+  background: transparent !important;
 }
 
 .user-table tbody tr:hover {
