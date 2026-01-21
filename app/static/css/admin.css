@@ -1578,6 +1578,23 @@ input:checked + .slider:before {
   background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.01));
 }
 
+/* Ensure all form-control and styled-select elements follow the theme */
+.form-control, .form-select, select.styled-select, .admin-container select {
+    background-color: var(--admin-card-bg) !important;
+    color: var(--admin-text) !important;
+    border: 1px solid var(--admin-border) !important;
+}
+
+[data-bs-theme="light"] .form-control, 
+[data-bs-theme="light"] .form-select, 
+[data-bs-theme="light"] select.styled-select,
+[data-bs-theme="light"] .admin-container select,
+[data-bs-theme="light"] .form-control:focus {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
 /* If using <img> */
 .course-image {
   display: block;
