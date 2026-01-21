@@ -4,19 +4,21 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 <style>
 .assessment-card {
-    background: linear-gradient(135deg, #1a1d24, #252830);
-    border: 2px solid #6f42c1;
+    background: var(--admin-card-bg);
+    border: 1px solid var(--admin-border);
     border-radius: 12px;
     margin-bottom: 24px;
+    overflow: hidden;
 }
 .assessment-card .card-header {
-    background: linear-gradient(135deg, #6f42c1, #e83e8c);
+    background: #000000;
     color: white;
-    border-radius: 10px 10px 0 0;
+    border-radius: 0;
+    padding: 15px 20px;
 }
 .assessment-item {
-    background: rgba(111, 66, 193, 0.1);
-    border: 1px solid rgba(111, 66, 193, 0.3);
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 12px;
@@ -27,7 +29,15 @@
 .no-assessment {
     text-align: center;
     padding: 30px;
-    color: rgba(255,255,255,0.6);
+    color: var(--text-muted);
+}
+[data-bs-theme="light"] .assessment-card .card-header {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+[data-bs-theme="light"] .assessment-item {
+    background: #f8fafc !important;
+    color: #1e293b !important;
 }
 </style>
 {% endblock %}
