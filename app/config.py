@@ -5,9 +5,14 @@ class Config:
     
     # Session cookie settings for iframe/proxy environment
     # Use SameSite=None for cross-site iframe contexts, Secure required with SameSite=None
-    SESSION_COOKIE_SAMESITE = 'Lax'
-    SESSION_COOKIE_SECURE = False
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
+    
+    # Development mode overrides for local preview
+    if os.environ.get('REPL_ID'):
+        SESSION_COOKIE_SECURE = True
+        SESSION_COOKIE_SAMESITE = 'None'
     
     DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///lms.db')
     
