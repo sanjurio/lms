@@ -367,12 +367,11 @@ footer.mt-5, [data-bs-theme="light"] footer.mt-5, [data-bs-theme="dark"] footer.
     transition: background-color 0.3s ease;
 }
 
-[data-bs-theme="light"] .course-image-wrap {
-    background-color: #f1f5f9 !important;
-}
-
+[data-bs-theme="light"] .course-image-wrap,
 [data-bs-theme="light"] .course-image {
     background-color: #f1f5f9 !important;
+    background: #f1f5f9 !important;
+    filter: brightness(1.1) contrast(0.9) !important;
 }
 
 .course-image {
