@@ -186,6 +186,7 @@ footer.mt-5, [data-bs-theme="light"] footer.mt-5, [data-bs-theme="dark"] footer.
   position: relative !important;
   z-index: 10 !important;
   border-top: 1px solid var(--border-color) !important;
+  padding: 3rem 0;
 }
 
 .footer-title, .footer-text, .footer-copyright, footer h3, footer p, [data-bs-theme="light"] .footer-title, [data-bs-theme="light"] .footer-text {
@@ -301,20 +302,20 @@ footer.mt-5, [data-bs-theme="light"] footer.mt-5, [data-bs-theme="dark"] footer.
 
 /* Enhanced Card Design */
 .card {
-  background-color: rgba(40, 40, 60, 0.7);
-  border: none;
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 1rem;
-  backdrop-filter: blur(10px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   margin-bottom: 1.5rem;
+  color: var(--text-color) !important;
 }
 
 .card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  border-color: rgba(var(--bs-primary-rgb), 0.3);
+  border-color: var(--primary-color) !important;
 }
 
 .card-body {
@@ -322,9 +323,13 @@ footer.mt-5, [data-bs-theme="light"] footer.mt-5, [data-bs-theme="dark"] footer.
 }
 
 .card-title {
-  color: #fff;
+  color: var(--text-color) !important;
   font-weight: 700;
   margin-bottom: 1rem;
+}
+
+.text-muted, [data-bs-theme="light"] .text-muted, [data-bs-theme="dark"] .text-muted, .card-body .text-muted, .footer-copyright .text-muted, .card-title + .text-muted, .text-center .text-muted {
+  color: var(--text-muted) !important;
 }
 
 /* Enhanced Course Grid */
@@ -355,23 +360,23 @@ footer.mt-5, [data-bs-theme="light"] footer.mt-5, [data-bs-theme="dark"] footer.
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
-  color: #fff;
+  color: var(--text-color);
 }
 
 .course-description {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-muted);
   margin-bottom: 1rem;
   flex-grow: 1;
 }
 
 .course-meta {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-muted);
   font-size: 0.9rem;
   margin-bottom: 1rem;
 }
 
 .course-meta i {
-  color: var(--bs-info);
+  color: var(--info-color);
   margin-right: 0.25rem;
 }
 
@@ -380,8 +385,8 @@ footer.mt-5, [data-bs-theme="light"] footer.mt-5, [data-bs-theme="dark"] footer.
   position: relative;
   margin-bottom: 1.5rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
   font-weight: 700;
 }
 
@@ -407,8 +412,8 @@ footer.mt-5, [data-bs-theme="light"] footer.mt-5, [data-bs-theme="dark"] footer.
   margin: 0.2rem;
   border-radius: 50px;
   font-size: 0.8rem;
-  background-color: rgba(var(--bs-primary-rgb), 0.1);
-  color: var(--bs-primary);
+  background-color: var(--primary-color);
+  color: #fff;
   transition: all 0.2s ease;
 }
 
@@ -458,8 +463,8 @@ pre::-webkit-scrollbar-track {
   border-radius: 0.75rem;
   margin-bottom: 1rem;
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: rgba(40, 40, 60, 0.5);
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg);
 }
 
 .interest-item:hover {
@@ -535,16 +540,16 @@ footer a:hover {
 
 /* Enhanced Form Elements */
 .form-control, .form-select {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color) !important;
   transition: all 0.3s ease;
 }
 
 .form-control:focus, .form-select:focus {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: var(--bs-primary);
-  color: #fff;
+  background-color: var(--card-bg);
+  border-color: var(--primary-color);
+  color: var(--text-color) !important;
   box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.2);
 }
 
@@ -596,29 +601,29 @@ footer a:hover {
   padding: 1rem;
   margin-bottom: 0.5rem;
   border-radius: 0.5rem;
-  background-color: rgba(40, 40, 60, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
   transition: all 0.3s ease;
 }
 
 .lesson-item:hover {
-  background-color: rgba(var(--bs-primary-rgb), 0.1);
+  background-color: var(--bg-color);
   transform: translateX(5px);
 }
 
 .lesson-item.completed {
-  border-left: 4px solid var(--bs-success);
+  border-left: 4px solid var(--success-color);
 }
 
 .lesson-item.in-progress {
-  border-left: 4px solid var(--bs-warning);
+  border-left: 4px solid var(--warning-color);
 }
 
 .lesson-item .lesson-title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #fff;
+  color: var(--text-color);
 }
 
 .lesson-item .lesson-status {
@@ -665,12 +670,12 @@ footer a:hover {
     margin: 0 0 5px 0;
     font-size: 1.1rem;
     font-weight: 600;
-    color: #333;
+    color: var(--text-color);
 }
 
 .interest-description {
     margin: 0;
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.9rem;
 }
 
