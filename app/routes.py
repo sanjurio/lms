@@ -1137,7 +1137,8 @@ def register_routes(app):
                 title=form.title.data,
                 description=form.description.data,
                 cover_image_url=form.cover_image_url.data,
-                issue_certificates=form.issue_certificates.data
+                issue_certificates=form.issue_certificates.data,
+                required_level=form.required_level.data
             )
             db.session.add(course)
             db.session.flush()  # Get the course ID
@@ -1176,6 +1177,7 @@ def register_routes(app):
             course.description = form.description.data
             course.cover_image_url = form.cover_image_url.data
             course.issue_certificates = form.issue_certificates.data
+            course.required_level = form.required_level.data
 
             # Update course-interest relationships
             CourseInterest.query.filter_by(course_id=course.id).delete()
@@ -1194,6 +1196,7 @@ def register_routes(app):
         form.title.data = course.title
         form.description.data = course.description
         form.cover_image_url.data = course.cover_image_url
+        form.required_level.data = course.required_level or 1
 
         # Set selected interests
         current_interests = [ci.interest_id for ci in CourseInterest.query.filter_by(course_id=course.id).all()]
