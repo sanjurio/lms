@@ -899,25 +899,28 @@ input:checked + .slider:before {
   color: #fca5a5;
 }
 
-/* Dropdown & Form Control Theme Fixes */
-.styled-select, .form-control {
-  background-color: var(--admin-card-bg) !important;
-  color: var(--admin-text) !important;
-  border: 1px solid var(--admin-border) !important;
-}
-
-[data-bs-theme="light"] .styled-select, 
-[data-bs-theme="light"] .form-control,
+/* Dropdown & Form Control Theme Fixes - Aggressive Overrides */
 [data-bs-theme="light"] select.form-control,
-[data-bs-theme="light"] .user-table select {
+[data-bs-theme="light"] .form-control,
+[data-bs-theme="light"] .styled-select,
+[data-bs-theme="light"] .user-table select,
+[data-bs-theme="light"] .responsive-table select,
+[data-bs-theme="light"] .video-access-control select,
+[data-bs-theme="light"] select {
+    background: #ffffff !important;
     background-color: #ffffff !important;
+    background-image: none !important;
     color: #1e293b !important;
     border: 1px solid #cbd5e1 !important;
+    -webkit-appearance: listbox !important;
+    appearance: listbox !important;
 }
 
-[data-bs-theme="light"] .styled-select option,
+[data-bs-theme="light"] select.form-control option,
 [data-bs-theme="light"] .form-control option,
-[data-bs-theme="light"] .user-table select option {
+[data-bs-theme="light"] .styled-select option,
+[data-bs-theme="light"] .user-table select option,
+[data-bs-theme="light"] select option {
     background-color: #ffffff !important;
     color: #1e293b !important;
 }
