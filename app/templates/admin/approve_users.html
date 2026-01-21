@@ -20,61 +20,65 @@
         </ul>
     </div>
 
-    <h2 class="admin-section-title">Users Awaiting Approval</h2>
-
-    {% if not pending_users %}
     <div class="admin-container">
+        <h2 class="admin-section-title">Users Awaiting Approval</h2>
+
+        {% if not pending_users %}
         <div class="alert alert-info">
             <p>There are no pending user registrations that require approval.</p>
         </div>
+        {% else %}
+        <div class="responsive-table">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Domain</th>
+                        <th>Registered On</th>
+                        <th>Access</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in pending_users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.email_domain or 'Unknown' }}</td>
+                        <td>{{ user.created_at.strftime('%d %b, %Y at %H:%M') }}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('admin_approve_user') }}" id="approval_form_{{ user.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ form.csrf_token._value() }}" />
+                                <input type="hidden" name="user_id" value="{{ user.id }}" />
+                                <input type="hidden" name="action" value="approve" />
+                                <select name="video_access" class="form-control form-control-sm styled-select">
+                                    <option value="off" {% if user.access_level == 'text_only' %}selected{% endif %}>EXTERNAL</option>
+                                    <option value="on" {% if user.access_level == 'full_access' %}selected{% endif %}>INTERNAL</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <div class="action-buttons" style="display: flex; gap: 0.5rem;">
+                                <button type="submit" form="approval_form_{{ user.id }}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <form method="post" action="{{ url_for('admin_approve_user') }}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to reject this user? This will permanently delete their account.')">
+                                    <input type="hidden" name="csrf_token" value="{{ form.csrf_token._value() }}" />
+                                    <input type="hidden" name="user_id" value="{{ user.id }}" />
+                                    <input type="hidden" name="action" value="reject" />
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="pending-users">
-        {% for user in pending_users %}
-        <div class="user-approval-card">
-                <div class="user-info">
-                    <div class="user-name">{{ user.username }}</div>
-                    <div class="user-email">{{ user.email }}</div>
-                    <div class="user-domain">Domain: <span>{{ user.email_domain or 'Unknown' }}</span></div>
-                    <div class="user-registered">Registered on <span>{{ user.created_at.strftime('%d %b, %Y at %H:%M') }}</span></div>
-                </div>
-
-                <div class="approval-actions">
-  <form method="post" action="{{ url_for('admin_approve_user') }}" class="approval-form">
-      <input type="hidden" name="csrf_token" value="{{ form.csrf_token._value() }}" />
-      <input type="hidden" name="user_id" value="{{ user.id }}" />
-      <input type="hidden" name="action" value="approve" />
-
-      <div class="video-access-control">
-          <select name="video_access" id="video_access_{{ user.id }}" class="form-control styled-select">
-              <option value="off" {% if user.access_level == 'text_only' %}selected{% endif %}>EXTERNAL</option>
-              <option value="on" {% if user.access_level == 'full_access' %}selected{% endif %}>INTERNAL</option>
-          </select>
-      </div>
-
-      <div class="approval-actions-row">
-          <button type="submit" class="btn btn-success btn-sm approve-btn">
-              <i class="fas fa-check"></i> Approve
-          </button>
-
-          <!-- keep reject as a form but placed next to the approve button -->
-          <div class="reject-form-inline" style="display:inline-block;">
-              <form method="post" action="{{ url_for('admin_approve_user') }}" style="margin: 0;">
-                  <input type="hidden" name="csrf_token" value="{{ form.csrf_token._value() }}" />
-                  <input type="hidden" name="user_id" value="{{ user.id }}" />
-                  <input type="hidden" name="action" value="reject" />
-                  <button type="submit" class="btn btn-danger btn-sm reject-btn"
-                          onclick="return confirm('Are you sure you want to reject this user? This will permanently delete their account.')">
-                      <i class="fas fa-times"></i> Reject
-                  </button>
-              </form>
-          </div>
-      </div>
-  </form>
-</div>
-
-            {% endfor %}
-    </div>
-    {% endif %}
 </div>
 {% endblock %}
