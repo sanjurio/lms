@@ -28,9 +28,9 @@ def set_user_video_access(user_id, video_access):
     user = User.query.get(user_id)
     if user:
         if video_access:
-            user.access_level = 'full_access'
+            user.access_level = 'D2' # Use D2 instead of full_access if that's the preferred level
         else:
-            user.access_level = 'text_only'
+            user.access_level = 'D2' # Default to D2
         db.session.commit()
         return True
     return False

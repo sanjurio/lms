@@ -43,10 +43,10 @@ def generate_qr_code(username, secret):
 def get_domain_access_info(email):
     """Get access information based on email domain"""
     if not email:
-        return {'access_level': 'basic', 'description': 'Basic access'}
+        return {'access_level': 'D2', 'description': 'Basic access'}
     
     domain = email.split('@')[-1].lower()
     return Config.DOMAIN_ACCESS.get(domain, {
-        'access_level': 'basic',
+        'access_level': 'D2',
         'description': 'Basic access - requires admin approval'
     })
