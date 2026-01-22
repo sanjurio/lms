@@ -52,10 +52,10 @@
                             <form action="{{ url_for('admin_update_user_level', user_id=user.id) }}" method="POST" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <select name="access_level" class="form-control form-control-sm d-inline-block w-auto" onchange="this.form.submit()" style="padding: 2px 5px; height: auto;">
-                                    <option value="1" {% if user.access_level == 1 %}selected{% endif %}>D1</option>
-                                    <option value="2" {% if user.access_level == 2 %}selected{% endif %}>D2</option>
-                                    <option value="3" {% if user.access_level == 3 %}selected{% endif %}>D3</option>
-                                    <option value="4" {% if user.access_level == 4 %}selected{% endif %}>D4</option>
+                                    <option value="D1" {% if user.access_level == 'D1' %}selected{% endif %}>D1</option>
+                                    <option value="D2" {% if user.access_level == 'D2' %}selected{% endif %}>D2</option>
+                                    <option value="D3" {% if user.access_level == 'D3' %}selected{% endif %}>D3</option>
+                                    <option value="D4" {% if user.access_level == 'D4' %}selected{% endif %}>D4</option>
                                 </select>
                             </form>
                         </td>

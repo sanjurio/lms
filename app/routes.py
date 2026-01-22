@@ -447,15 +447,12 @@ def register_routes(app):
                     username=token.username,
                     email=token.email,
                     password_hash=token.password_hash,
-                    access_level=session.get('registration_access_level', 'D2')
+                    access_level=session.get('registration_access_level')
                 )
                 user.set_access_based_on_domain()
-                # If set_access_based_on_domain overwrote the level, we might want to restore it
-                # if the user explicitly chose D2. But user said don't touch domain access.
-                # Usually set_access_based_on_domain is for auto-assigning levels.
-                # I'll ensure we keep the registration level if domain level is just 'basic'.
-                if user.access_level == 'basic' or not user.access_level:
-                    user.access_level = session.get('registration_access_level', 'D2')
+                # Ensure we keep registration level if domain didn't provide one
+                if not user.access_level:
+                    user.access_level = session.get('registration_access_level')
                 
                 db.session.add(user)
                 
