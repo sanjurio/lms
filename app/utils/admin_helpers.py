@@ -10,6 +10,8 @@ def approve_user(user_id, approved_by_id=None):
     user = User.query.get(user_id)
     if user:
         user.is_approved = True
+        # Ensure we don't reset access_level here. 
+        # It should already be set to what the user chose during registration (D1-D4).
         db.session.commit()
         return True
     return False

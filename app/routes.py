@@ -449,8 +449,9 @@ def register_routes(app):
                     password_hash=token.password_hash,
                     access_level=session.get('registration_access_level', 1)
                 )
-                user.set_access_based_on_domain()
-                db.session.add(user)
+                # Keep the access level set during registration instead of overwriting it with domain defaults
+                domain = user.email.split('@')[-1].lower()
+                user.email_domain = domain
                 
                 token.verified = True
                 db.session.commit()
