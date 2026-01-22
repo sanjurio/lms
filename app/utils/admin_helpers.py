@@ -28,9 +28,12 @@ def set_user_video_access(user_id, video_access):
     user = User.query.get(user_id)
     if user:
         if video_access:
-            user.access_level = 'full_access'
+            user.access_level = 4 # D4 = Full Access
         else:
-            user.access_level = 'text_only'
+            # If turning off video access, we revert to a sensible default 
+            # but try not to downgrade below D1/D2 unnecessarily
+            if user.access_level == 4:
+                user.access_level = 2 # D2 = Text/Basic
         db.session.commit()
         return True
     return False

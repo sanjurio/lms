@@ -62,8 +62,16 @@ class User(UserMixin, db.Model):
             domain = self.email.split('@')[-1].lower()
             self.email_domain = domain
             
-            access_info = get_domain_access_info(self.email)
-            self.access_level = access_info.get('access_level', 'basic')
+            # Preserve access_level if it's already set to something other than the default (1)
+            # This allows registration choices like D2, D3, D4 to persist
+            if self.access_level is None or self.access_level == 1:
+                access_info = get_domain_access_info(self.email)
+                # Ensure we store the numeric value if the helper returns a string mapping
+                raw_level = access_info.get('access_level', 1)
+                # Map common strings to numbers if necessary, otherwise default to 1
+                level_map = {'basic': 1, 'text_only': 2, 'full_access': 4}
+                self.access_level = level_map.get(raw_level, raw_level if isinstance(raw_level, int) else 1)
+            
             self.is_approved = False  # Always require admin approval
     
     def can_view_videos(self):
