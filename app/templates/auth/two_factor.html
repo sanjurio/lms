@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <h2 class="card-title">Two-Factor Authentication</h2>
+                    {% if setup %}
+                        {% if registration %}
+                        <p class="text-muted">Set up required 2FA for your account</p>
+                        {% else %}
+                        <p class="text-muted">Set up 2FA to enhance your account security</p>
+                        {% endif %}
+                    {% else %}
+                    <p class="text-muted">Enter the 6-digit code from your authenticator app</p>
+                    {% endif %}
+                </div>
+                
+                {% if setup %}
+                <div class="mb-4">
+                    <p>Scan the QR code below with your authenticator app (like Microsoft Authenticator, Google Authenticator, or Authy):</p>
+                    
+                    <div class="text-center my-3">
+                        <img src="{{ qr_code }}" alt="QR Code for 2FA setup" class="img-fluid" style="max-width: 200px;">
+                    </div>
+                    
+                    <p>Or manually enter this code in your app:</p>
+                    <div class="d-flex align-items-center justify-content-center mb-3">
+                        <div class="border px-3 py-2 rounded bg-dark me-2" id="secret-key">
+                            {% if registration and session.registration_data %}
+                            {{ session.registration_data.otp_secret }}
+                            {% elif session.otp_secret %}
+                            {{ session.otp_secret }}
+                            {% else %}
+                            <span class="text-danger">Error: Secret key not found</span>
+                            {% endif %}
+                        </div>
+                        <button type="button" id="copy-secret" class="btn btn-outline-secondary btn-sm">Copy Code</button>
+                    </div>
+                    
+                    <div class="card mt-3 mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Setup Instructions:</h5>
+                        </div>
+                        <div class="card-body">
+                            <ol>
+                                <li>Install an authenticator app on your device (Microsoft Authenticator, Google Authenticator, Authy, etc.)</li>
+                                <li>Scan the QR code or manually enter the secret key</li>
+                                <li>Once added, enter the 6-digit code shown in your app below</li>
+                            </ol>
+                            <div class="alert alert-light mt-2 small">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Tip:</strong> The authenticator app generates a new code every 30 seconds, but our system accepts codes within a 90-second window to account for clock differences between devices.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if registration %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Important:</strong> Keep this authenticator app configured as you will need to enter the code each time you login. 2FA is mandatory for all users on this platform.
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <form id="two-factor-form" method="post" action="{{ request.path }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="token" class="form-label">Authentication Code</label>
+                        <input type="text" id="token" name="token" class="form-control token-input text-center" 
+                               placeholder="Enter 6-digit code" autocomplete="off" inputmode="numeric" 
+                               pattern="[0-9]*" maxlength="6" required>
+                        <div class="form-text text-danger">
+                            {% for error in form.token.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        
+                        {% if not setup %}
+                        <div class="text-center mt-2">
+                            <small class="text-muted">Code refreshes in <span id="token-timer">30</span> seconds</small>
+                            <div class="progress mt-1" style="height: 4px;">
+                                <div id="token-progress" class="progress-bar bg-info" style="width: 100%;"></div>
+                            </div>
+                            <small class="text-muted mt-1 d-block">Don't worry about exact timing - your code is valid for a 90-second window</small>
+                            <small id="code-refresh-message" class="text-success" style="opacity: 0; transition: opacity 0.5s;"></small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 mb-3">
+                        {% if registration %}
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-check-circle me-2"></i>Complete Registration
+                        </button>
+                        <div class="alert alert-info small mt-2">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Enter the 6-digit code from your authenticator app and click the button above.
+                        </div>
+                        {% else %}
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-shield-alt me-2"></i>Verify Code
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    {% if not setup %}
+                    <div class="alert alert-info">
+                        <small>Lost your device? Please contact an administrator for assistance.</small>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/validation.js') }}"></script>
+<script src="{{ url_for('static', filename='js/2fa.js') }}"></script>
+{% endblock %}

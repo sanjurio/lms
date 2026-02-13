@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h1 class="section-title">{{ 'Edit Course' if course else 'Add New Course' }}</h1>
+    
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}" class="active">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Teams</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Teams Requests</a></li>
+            <li><a href="{{ url_for('admin_mandatory_courses') }}">Mandatory Courses</a></li>
+        </ul>
+    </div>
+    
+    <div class="admin-container">
+        <div class="admin-form-container">
+            <form method="post" action="">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-group">
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control") }}
+                    <div class="error-message">
+                        {% for error in form.title.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    {{ form.description.label(class="form-label") }}
+                    {{ form.description(class="form-control", rows=5) }}
+                    <div class="error-message">
+                        {% for error in form.description.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    {{ form.cover_image_url.label(class="form-label") }}
+                    {{ form.cover_image_url(class="form-control") }}
+                    <div class="form-text">Enter a URL for the cover image (optional)</div>
+                    <div class="error-message">
+                        {% for error in form.cover_image_url.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    {{ form.required_level.label(class="form-label") }}
+                    {{ form.required_level(class="form-control") }}
+                    <div class="form-text">Minimum access level required for this course (D1 is lowest, D4 is highest).</div>
+                    <div class="error-message">
+                        {% for error in form.required_level.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Associated Teamss</label>
+                    <div class="checkbox-group">
+                        {% for choice in form.interests.choices %}
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="interests" id="interest-{{ choice[0] }}" value="{{ choice[0] }}"
+                                {% if choice[0] in form.interests.data %}checked{% endif %}>
+                            <label for="interest-{{ choice[0] }}">{{ choice[1] }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="form-text">Select Teams that are relevant to this course. Users with access to these Teams will be able to view the course.</div>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-item">
+                        {{ form.issue_certificates(id="issue_certificates") }}
+                        {{ form.issue_certificates.label(for="issue_certificates", class="form-label") }}
+                    </div>
+                    <div class="form-text">If enabled, users will be able to download a certificate upon course completion.</div>
+                </div>
+                
+                <div class="form-group">
+                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('admin_courses') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

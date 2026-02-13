@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h1 class="section-title">Admin Dashboard</h1>
+
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}" class="active">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Teams</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Teams Requests</a></li>
+            <li><a href="{{ url_for('admin_mandatory_courses') }}">Mandatory Courses</a></li>
+        </ul>
+    </div>
+
+     <div class="admin-stats">
+        <div class="stat-card">
+            <div class="stat-label">Pending Users</div>
+            <div class="stat-value">{{ pending_users_count }}</div>
+            <a href="{{ url_for('admin_pending_users') }}" class="btn btn-primary">Manage</a>
+        </div>
+ 
+        <div class="stat-card">
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value">{{ users_count }}</div>
+            <a href="{{ url_for('admin_users') }}" class="btn btn-primary">Manage</a>
+        </div>
+ 
+        <div class="stat-card">
+            <div class="stat-label">Courses</div>
+            <div class="stat-value">{{ courses_count }}</div>
+            <a href="{{ url_for('admin_courses') }}" class="btn btn-primary">Manage</a>
+        </div>
+ 
+        <div class="stat-card">
+            <div class="stat-label">Teams</div>
+            <div class="stat-value">{{ interests_count }}</div>
+            <a href="{{ url_for('admin_interests') }}" class="btn btn-primary">Manage</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+    .user-selection {
+        display: none;
+        margin-top: 1rem;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+    }
+    .user-selection.visible {
+        display: block;
+    }
+    .checkbox-list {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 0.5rem;
+        background: var(--bg-primary);
+    }
+    .checkbox-item {
+        padding: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .checkbox-item:last-child {
+        border-bottom: none;
+    }
+    .checkbox-item label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+    }
+    .select-all-container {
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+    .course-selection {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+    }
+
+    /* Fix dark dropdown visibility - Theme Responsive */
+    select.form-control {
+      background-color: var(--admin-card-bg) !important;
+      color: var(--admin-text) !important;
+      border: 1px solid var(--admin-border) !important;
+    }
+     
+    /* Dropdown options */
+    select.form-control option {
+      background-color: var(--admin-card-bg) !important;
+      color: var(--admin-text) !important;
+    }
+
+    [data-bs-theme="light"] select.form-control,
+    [data-bs-theme="light"] select.form-control option {
+      background-color: #ffffff !important;
+      color: #1e293b !important;
+      border-color: #cbd5e1 !important;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h1 class="section-title">Assign Mandatory Courses</h1>
+
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Teams</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Teams Requests</a></li>
+            <li><a href="{{ url_for('admin_mandatory_courses') }}" class="active">Mandatory Courses</a></li>
+        </ul>
+    </div>
+
+    <div class="admin-container">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="course-selection">
+                        <label><strong>Select Courses</strong></label>
+                        <p class="text-muted mb-2">Select one or more courses to make mandatory</p>
+                        <div class="select-all-container">
+                            <label>
+                                <input type="checkbox" id="select-all-courses"> Select All Courses
+                            </label>
+                        </div>
+                        <div class="checkbox-list">
+                            {% for choice in form.course_ids.choices %}
+                            <div class="checkbox-item">
+                                <label>
+                                    <input type="checkbox" name="course_ids" value="{{ choice[0] }}" class="course-checkbox">
+                                    {{ choice[1] }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% for error in form.course_ids.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label for="assignment_type">Assign To</label>
+                        {{ form.assignment_type(class="form-control", id="assignment_type") }}
+                        {% for error in form.assignment_type.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div id="user-selection" class="user-selection">
+                        <label><strong>Select Users</strong></label>
+                        <div class="select-all-container">
+                            <label>
+                                <input type="checkbox" id="select-all-users"> Select All Users
+                            </label>
+                        </div>
+                        <div class="checkbox-list">
+                            {% for choice in form.user_ids.choices %}
+                            <div class="checkbox-item">
+                                <label>
+                                    <input type="checkbox" name="user_ids" value="{{ choice[0] }}" class="user-checkbox">
+                                    {{ choice[1] }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% for error in form.user_ids.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label for="deadline_days">Deadline (days from now)</label>
+                        {{ form.deadline_days(class="form-control") }}
+                        <small class="form-text text-muted">Users should complete the course(s) within this many days. Default is 30 days.</small>
+                        {% for error in form.deadline_days.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check"></i> Assign Mandatory Courses
+                        </button>
+                        <a href="{{ url_for('admin_mandatory_courses') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const assignmentType = document.getElementById('assignment_type');
+    const userSelection = document.getElementById('user-selection');
+    const selectAllUsers = document.getElementById('select-all-users');
+    const userCheckboxes = document.querySelectorAll('.user-checkbox');
+    const selectAllCourses = document.getElementById('select-all-courses');
+    const courseCheckboxes = document.querySelectorAll('.course-checkbox');
+
+    function toggleUserSelection() {
+        if (assignmentType.value === 'specific') {
+            userSelection.classList.add('visible');
+        } else {
+            userSelection.classList.remove('visible');
+        }
+    }
+
+    assignmentType.addEventListener('change', toggleUserSelection);
+    toggleUserSelection();
+
+    selectAllUsers.addEventListener('change', function() {
+        userCheckboxes.forEach(cb => cb.checked = selectAllUsers.checked);
+    });
+
+    userCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            selectAllUsers.checked = Array.from(userCheckboxes).every(c => c.checked);
+        });
+    });
+
+    selectAllCourses.addEventListener('change', function() {
+        courseCheckboxes.forEach(cb => cb.checked = selectAllCourses.checked);
+    });
+
+    courseCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            selectAllCourses.checked = Array.from(courseCheckboxes).every(c => c.checked);
+        });
+    });
+});
+</script>
+{% endblock %}

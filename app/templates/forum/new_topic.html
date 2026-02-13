@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            {% if course_id %}
+            <li class="breadcrumb-item"><a href="{{ url_for('user_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('view_course', course_id=course_id) }}">Course</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('course_forum', course_id=course_id) }}">Forum</a></li>
+            {% else %}
+            <li class="breadcrumb-item"><a href="{{ url_for('forum_index') }}">General Forum</a></li>
+            {% endif %}
+            <li class="breadcrumb-item active" aria-current="page">New Topic</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header">
+            <h1 class="h4 mb-0">Create New Topic</h1>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('forum_new_topic') }}">
+                {{ form.hidden_tag() }}
+                {% if course_id %}
+                <input type="hidden" name="course_id" value="{{ course_id }}">
+                {% endif %}
+                
+                <div class="mb-3">
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control") }}
+                    {% for error in form.title.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.content.label(class="form-label") }}
+                    {{ form.content(class="form-control", rows=8) }}
+                    {% for error in form.content.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% if course_id %}{{ url_for('course_forum', course_id=course_id) }}{% else %}{{ url_for('forum_index') }}{% endif %}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

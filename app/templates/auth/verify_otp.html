@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+<style>
+.otp-input {
+    font-size: 1.5rem;
+    letter-spacing: 0.5rem;
+    text-align: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <h2 class="card-title">Verify Code</h2>
+                    <p class="text-muted">Enter the 6-digit code sent to<br><strong>{{ email }}</strong></p>
+                </div>
+                
+                <form id="verify-otp-form" method="post" action="{{ url_for('verify_reset_otp') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-4">
+                        {{ form.otp.label(class="form-label") }}
+                        {{ form.otp(class="form-control otp-input", placeholder="000000", maxlength="6") }}
+                        <div class="form-text text-danger">
+                            {% for error in form.otp.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        <div class="form-text mt-2">Code expires in 10 minutes</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mb-3">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="mb-0"><a href="{{ url_for('forgot_password') }}">Request a new code</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const otpInput = document.querySelector('.otp-input');
+    if (otpInput) {
+        otpInput.focus();
+        otpInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '');
+            if (this.value.length > 6) {
+                this.value = this.value.substring(0, 6);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+.question-form-card {
+    background: linear-gradient(135deg, #1a1d24, #252830);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.question-form-header {
+    background: linear-gradient(135deg, #1e1e2d, #1e1e2d);
+    padding: 24px 28px;
+    color: white;
+}
+
+.question-form-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.question-form-header p {
+    margin: 8px 0 0;
+    opacity: 0.9;
+    font-size: 0.95rem;
+}
+
+.question-form-body {
+    padding: 28px;
+}
+
+.form-section {
+    margin-bottom: 28px;
+}
+
+.form-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #a5b4fc;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(165, 180, 252, 0.3);
+    display: flex;
+    align-items: center;
+}
+
+.form-section-title i {
+    margin-right: 10px;
+}
+
+.setting-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.setting-card label {
+    font-weight: 500;
+    color: #e2e8f0;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.setting-card .form-control {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    color: #fff;
+    padding: 12px 16px;
+    font-size: 1rem;
+}
+
+.setting-card .form-control:focus {
+    border-color: #a5b4fc;
+    box-shadow: 0 0 0 3px rgba(165, 180, 252, 0.2);
+}
+
+.setting-card .form-control::placeholder {
+    color: rgba(255,255,255,0.4);
+}
+
+.setting-card textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.helper-text {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.5);
+    margin-top: 6px;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 768px) {
+    .options-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.option-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.option-card.required {
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.option-card label {
+    font-weight: 500;
+    color: #e2e8f0;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.option-card label .option-letter {
+    background: rgba(99, 102, 241, 0.2);
+    color: #1e1e2d;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-right: 10px;
+}
+
+.option-card.optional label .option-letter {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+}
+
+.option-card .form-control {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    color: #fff;
+    padding: 12px 16px;
+    font-size: 1rem;
+}
+
+.option-card .form-control:focus {
+    border-color: #1e1e2d;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+}
+
+.settings-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 768px) {
+    .settings-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.btn-save {
+    background: linear-gradient(135deg, #1e1e2d, #1e1e2d);
+    border: none;
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    color: white;
+}
+
+.btn-cancel {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 10px;
+    color: #e2e8f0;
+}
+
+.btn-cancel:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+}
+
+.assignment-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255,255,255,0.1);
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-top: 10px;
+}
+
+.assignment-badge i {
+    margin-right: 8px;
+}
+
+.required-badge {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+}
+
+.optional-badge {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}" class="active">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Teams</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Teams Requests</a></li>
+            <li><a href="{{ url_for('admin_mandatory_courses') }}">Mandatory Courses</a></li>
+        </ul>
+    </div>
+
+    <div class="admin-container" style="max-width: 700px; margin: 0 auto;">
+        <div class="question-form-card">
+            <div class="question-form-header">
+                <h2><i class="fas fa-edit me-2"></i>Edit Question</h2>
+                <p>Modify this multiple choice question</p>
+                <div class="assignment-badge">
+                    <i class="fas fa-clipboard-list"></i>
+                    {{ question.assignment.title }}
+                </div>
+            </div>
+
+            <div class="question-form-body">
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-question"></i>
+                            Question Text
+                        </div>
+                        
+                        <div class="setting-card">
+                            <label for="question_text">Question</label>
+                            {{ form.question_text(class="form-control", rows=3, placeholder="Enter your question here...") }}
+                            {% for error in form.question_text.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-list"></i>
+                            Answer Options
+                        </div>
+                        
+                        <div class="options-grid">
+                            <div class="option-card required">
+                                <label>
+                                    <span class="option-letter">A</span>
+                                    Option A
+                                    <span class="required-badge">Required</span>
+                                </label>
+                                {{ form.option_a(class="form-control", placeholder="Enter option A...") }}
+                                {% for error in form.option_a.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+
+                            <div class="option-card required">
+                                <label>
+                                    <span class="option-letter">B</span>
+                                    Option B
+                                    <span class="required-badge">Required</span>
+                                </label>
+                                {{ form.option_b(class="form-control", placeholder="Enter option B...") }}
+                                {% for error in form.option_b.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+
+                            <div class="option-card optional">
+                                <label>
+                                    <span class="option-letter">C</span>
+                                    Option C
+                                    <span class="optional-badge">Optional</span>
+                                </label>
+                                {{ form.option_c(class="form-control", placeholder="Enter option C (optional)...") }}
+                            </div>
+
+                            <div class="option-card optional">
+                                <label>
+                                    <span class="option-letter">D</span>
+                                    Option D
+                                    <span class="optional-badge">Optional</span>
+                                </label>
+                                {{ form.option_d(class="form-control", placeholder="Enter option D (optional)...") }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-cog"></i>
+                            Question Settings
+                        </div>
+                        
+                        <div class="settings-row">
+                            <div class="setting-card">
+                                <label for="correct_answer">
+                                    <i class="fas fa-check-circle text-success me-1"></i> Correct Answer
+                                </label>
+                                {{ form.correct_answer(class="form-control") }}
+                                <div class="helper-text">Select A, B, C, or D</div>
+                                {% for error in form.correct_answer.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+
+                            <div class="setting-card">
+                                <label for="points">
+                                    <i class="fas fa-star text-warning me-1"></i> Points
+                                </label>
+                                {{ form.points(class="form-control", min=1) }}
+                                <div class="helper-text">Points for correct answer</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="setting-card">
+                            <label for="explanation">
+                                <i class="fas fa-lightbulb text-info me-1"></i> Explanation <span class="text-muted">(optional)</span>
+                            </label>
+                            {{ form.explanation(class="form-control", rows=2, placeholder="Explain why this is the correct answer (shown after submission)...") }}
+                            <div class="helper-text">This will be shown to users after they submit their answer</div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-save">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a href="{{ url_for('admin_edit_assignment', assignment_id=question.assignment_id) }}" class="btn btn-cancel">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

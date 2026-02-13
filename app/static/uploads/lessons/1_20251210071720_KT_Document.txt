@@ -1,0 +1,151 @@
+1. Introduction
+Erlang’s Concurrency Model
+Erlang was designed to handle massive concurrency with lightweight processes that run independently and communicate via message passing. Unlike threads in traditional programming, these processes are isolated and do not share memory, making Erlang systems robust and scalable.
+
+What are OTP Behaviours?
+OTP (Open Telecom Platform) is Erlang's standard library and set of design principles for building fault-tolerant, concurrent systems. Behaviours like gen_server, gen_statem, and supervisor provide reusable patterns for common tasks, reducing the complexity of coding robust systems from scratch.
+
+Why Are OTP Behaviours Important?
+
+Abstract repetitive patterns, making code concise and maintainable.
+Enforce a standard way of structuring Erlang applications.
+Facilitate fault tolerance through built-in supervision.
+
+
+
+2. OTP Behaviours 
+A. gen_server
+The gen_server behaviour is used to implement server processes. It abstracts the process of handling synchronous (call) and asynchronous (cast) messages.
+
+Key Callbacks and Workflow:
+
+init/1: Initializes the process. Returns the initial state.
+handle_call/3: Handles synchronous requests. Example: Returning the value for a given key in a key-value store.
+handle_cast/2: Handles asynchronous messages. Example: Updating a key-value pair in the store.
+terminate/2: Cleans up resources before the process exits.
+Example:
+A simple key-value store implemented as a gen_server could:
+
+Store state in a map.
+Use handle_call to fetch values for a given key.
+Use handle_cast to update key-value pairs.
+
+Use Cases:
+
+Managing stateful components like caches.
+Implementing Remote Procedure Calls (RPC).
+
+
+
+B. gen_statem 
+The gen_statem behaviour models a finite state machine. It's ideal for systems where actions depend on the current state.
+
+Key Concepts:
+
+States and Events: The system transitions between predefined states based on events.
+Callbacks: state_name(EventType, EventContent, StateData) -> NextState.
+Example:
+Imagine a traffic light system:
+
+States: red, yellow, green.
+Events: Timer expiration, manual override.
+In the red state, a timer expiration event transitions the system to green.
+
+Use Cases:
+
+Protocol implementations (e.g., TCP handshake).
+Devices with distinct modes of operation.
+
+
+C. Supervisor 
+Supervisors manage the lifecycle of worker processes and restart them in case of failure, ensuring fault tolerance.
+
+Supervision Strategies:
+
+one_for_one: Restarts only the failed child.
+one_for_all: Restarts all children if one fails.
+rest_for_one: Restarts the failed child and all subsequent children.
+Example:
+Consider a web server application:
+
+A supervisor manages workers for HTTP requests and database connections.
+If an HTTP worker crashes, the supervisor restarts it without affecting others.
+Use Cases:
+
+Recovery in multi-component systems.
+Ensuring uptime for critical processes.
+
+
+How does gen_statem compare to gen_server in terms of complexity?
+
+gen_statem:
+
+Higher Complexity:
+Designed to model finite-state machines (FSMs), where the system transitions between states based on events.
+Requires understanding and explicitly defining states, events, and transitions.
+Callback functions are more intricate because they vary based on the current state.
+
+gen_server:
+
+Lower Complexity:
+Ideal for simpler stateful services where you only need to handle synchronous (call) and asynchronous (cast) messages.
+Logic is written in a more generic manner, with fewer considerations about states.
+
+
+Use Cases
+Use gen_server for simple systems where state transitions are straightforward and don’t need explicit modeling.
+gen_statem shines when your logic depends heavily on current states and their valid transitions.
+
+The behavior of your system is highly dependent on current state.
+Examples: Protocol implementations (e.g., TCP handshake), stateful devices (traffic lights, vending machines).
+gen_server excels when:
+
+You need a generic server process for handling requests without worrying about explicit states.
+Examples: Key-value stores, caching mechanisms, or worker processes.
+
+Lets take traffic light for an example.
+
+There are red, yellow, green lights. If we want to implement the process in gen_statem we would need to specify red, green and yellow separately. But If it's in gen server we dont need to specify the state separately as the current state of the 
+
+
+
+When supervising processes with dependencies, the key is to design a supervision strategy that ensures proper startup, shutdown, and fault isolation. The best strategy depends on the nature of the dependencies between the processes
+
+Types of Dependencies
+Sequential Dependency: One process cannot function without another being started first (e.g., a database connection must exist before handling queries).
+Independent but Related: Processes can function independently but are logically related (e.g., worker processes that depend on a shared resource pool).
+
+Supervision Strategies
+a. Use one_for_all Strategy
+If processes are tightly coupled (e.g., if one fails, all need to restart), use the one_for_all strategy.
+
+b. Use rest_for_one Strategy
+If processes have sequential dependencies (e.g., Process A must run before Process B), use rest_for_one.
+If a process crashes, this strategy restarts it and all processes started after it.
+
+c. Use one_for_one with Explicit Monitoring
+For loosely coupled processes, where each can restart independently, use one_for_one.
+If additional coordination is needed, processes can monitor each other explicitly using erlang:monitor.
+
+
+d. Organize Processes into Sub-Trees
+For complex systems, divide processes into supervision sub-trees based on functionality or dependency.
+Each sub-tree can have its own supervision strategy, and a top-level supervisor manages these sub-trees.
+
+
+e. Use temporary or transient Children for Dependency Checkers
+If a process exists only to verify the availability of a dependency (e.g., a database connection checker), define it as temporary or transient.
+This ensures it doesn’t restart unnecessarily.
+
+
+
+OTP Behaviours simplify complex systems by providing reusable patterns.
+gen_server for stateful services, gen_statem for state machines, and supervisor for fault tolerance.
+
+Resources for Further Learning:
+
+Erlang OTP Documentation
+Community forums and tutorials.
+
+
+Erlang’s design ensures concurrency and fault tolerance. The “let it crash” philosophy recovers from failures without affecting the rest of the system.

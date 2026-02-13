@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+.progress-card {
+    margin-bottom: 1.5rem;
+}
+.lesson-status-icon {
+    width: 24px;
+    text-align: center;
+}
+.stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    text-align: center;
+}
+.stat-item h3 {
+    font-size: 2rem;
+    margin: 0;
+    font-weight: 700;
+}
+.stat-item p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+.course-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.progress-lessons-table {
+  width: 100%;
+  table-layout: fixed;
+}
+ 
+.progress-lessons-table th,
+.progress-lessons-table td {
+  vertical-align: middle;
+}
+ 
+.progress-lessons-table th:nth-child(1),
+.progress-lessons-table td:nth-child(1) {
+  width: 40px;
+}
+ 
+.progress-lessons-table th:nth-child(2),
+.progress-lessons-table td:nth-child(2) {
+  width: 50%;
+}
+ 
+.progress-lessons-table th:nth-child(3),
+.progress-lessons-table td:nth-child(3) {
+  width: 20%;
+  text-align: center;
+}
+ 
+.progress-lessons-table th:nth-child(4),
+.progress-lessons-table td:nth-child(4) {
+  width: 30%;
+  text-align: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h1 class="section-title">Course Progress for {{ user.username }}</h1>
+    
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}" class="active">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Teams</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Teams Requests</a></li>
+            <li><a href="{{ url_for('admin_mandatory_courses') }}">Mandatory Courses</a></li>
+        </ul>
+    </div>
+   
+    <div class="admin-container">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5><i class="fas fa-user me-2"></i>User Details</h5>
+                <p class="mb-1"><strong>Username:</strong> {{ user.username }}</p>
+                <p class="mb-1"><strong>Email:</strong> {{ user.email }}</p>
+                <p class="mb-0"><strong>Registered:</strong> {{ user.created_at.strftime('%d %b, %Y') }}</p>
+            </div>
+        </div>
+        
+        <div class="stats-card">
+            <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Overall Progress</h5>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>{{ overall_stats.total_courses }}</h3>
+                    <p>Courses Available</p>
+                </div>
+                <div class="stat-item">
+                    <h3>{{ overall_stats.total_lessons }}</h3>
+                    <p>Total Lessons Available</p>
+                </div>
+                <div class="stat-item">
+                    <h3>{{ overall_stats.completed_lessons }}</h3>
+                    <p>Lessons Completed</p>
+                </div>
+                <div class="stat-item">
+                    <h3>{{ overall_stats.percentage }}%</h3>
+                    <p>Completion Percentage</p>
+                </div>
+            </div>
+            <div class="progress mt-3" style="height: 25px; background: rgba(255,255,255,0.3);">
+                <div class="progress-bar bg-light text-dark" role="progressbar" style="width: {{ overall_stats.percentage }}%;">
+                    {{ overall_stats.percentage }}%
+                </div>
+            </div>
+        </div>
+        
+        {% if not course_progress %}
+        <div class="alert alert-info">
+            <h5><i class="fas fa-info-circle me-2"></i>No Course Access</h5>
+            <p class="mb-0">This user doesn't have access to any courses yet. Grant interest access to enable course access.</p>
+            <a href="{{ url_for('admin_user_interests', user_id=user.id) }}" class="btn btn-primary mt-3">
+                <i class="fas fa-key me-1"></i> Manage Interests
+            </a>
+        </div>
+        {% else %}
+        <h4 class="mb-3"><i class="fas fa-book me-2"></i>Course Details</h4>
+        
+        {% for cp in course_progress %}
+        <div class="card progress-card shadow-sm">
+            <div class="card-header bg-transparent border-bottom">
+                <div class="course-progress-header">
+                    <div>
+                        <h5 class="mb-0 fw-bold">{{ cp.course.title }}</h5>
+                        <small class="text-muted">{{ cp.completed }}/{{ cp.total }} lessons completed</small>
+                    </div>
+                    <div>
+                        {% if cp.percentage == 100 %}
+                        <span class="badge bg-success fs-6"><i class="fas fa-trophy me-1"></i> Completed</span>
+                        {% elif cp.percentage > 0 %}
+                        <span class="badge bg-warning text-dark fs-6"><i class="fas fa-spinner me-1"></i> In Progress</span>
+                        {% else %}
+                        <span class="badge bg-secondary fs-6"><i class="fas fa-circle me-1"></i> Not Started</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="progress mt-2" style="height: 12px; border-radius: 6px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ cp.percentage }}%;">
+                        {{ cp.percentage }}%
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if cp.lessons %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 progress-lessons-table align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px;" class="ps-3">#</th>
+                                <th>Lesson</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-end pe-3">Completed At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ld in cp.lessons %}
+                            <tr>
+                                <td class="ps-3 fw-bold text-muted">{{ ld.lesson.order }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2">
+                                            {% if ld.status == 'completed' %}
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            {% elif ld.status == 'in_progress' %}
+                                            <i class="fas fa-clock text-warning"></i>
+                                            {% else %}
+                                            <i class="far fa-circle text-muted"></i>
+                                            {% endif %}
+                                        </span>
+                                        {{ ld.lesson.title }}
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    {% if ld.status == 'completed' %}
+                                    <span class="badge bg-success">Completed</span>
+                                    {% elif ld.status == 'in_progress' %}
+                                    <span class="badge bg-warning text-dark">In Progress</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Not Started</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-3">
+                                    {% if ld.completed_at %}
+                                    <small class="text-muted">{{ ld.completed_at.strftime('%d %b, %Y') }}</small>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center">
+                    <p class="text-muted mb-0">No lessons in this course yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+        
+        <div class="mt-4">
+            <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Users
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

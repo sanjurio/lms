@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+/* === Interests — three-column clean layout ===
+   Plop this in the template for a single-file test. Feel free to move CSS to admin.css later.
+*/
+
+/* === Theme-aware variables === */
+:root {
+  --ui-primary: var(--bs-primary);
+
+  --bg-panel: var(--bs-body-bg);
+  --card-bg: var(--bs-body-bg);
+
+  --text: var(--bs-body-color);
+  --muted: var(--bs-secondary-color);
+
+  --pill-text: #ffffff;
+  --gap: 18px;
+}
+
+/* Dark-only polish */
+[data-bs-theme="dark"] {
+  --bg-panel: #0f1720;
+  --card-bg: #0b1220;
+  --text: #eaf3ff;
+}
+.muted {
+  color: var(--bs-secondary-color);
+}
+
+
+/* Page-level */
+.section {
+  max-width: 1180px;
+  margin: 28px auto;
+  padding: 22px;
+  background: var(--bg-panel);
+  border-radius: 12px;
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.02);
+  box-shadow: 0 14px 34px rgba(2,6,23,0.45);
+}
+
+/* Header */
+.section-title {
+  font-size: 28px;
+  color: var(--bs-body-color);
+  position: relative;
+}
+/* underline */
+.section-title::after {
+  content: "";
+  display: block;
+  width: 42px;
+  height: 3px;
+  margin-top: 6px;
+  background: var(--bs-primary);
+  border-radius: 2px;
+}
+.card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,0.02);
+  margin-bottom: 14px;
+}
+
+/* Top bar: title left, count right */
+.card-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding: 6px 2px 12px 2px;
+}
+.card-header h3 { margin: 0; font-size: 1.12rem; font-weight: 800; }
+.selected-count {
+  background: rgba(255,255,255,0.03);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+/* Grid layout for 3 side-by-side columns */
+.columns-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gap);
+  align-items: start;
+  margin-top: 8px;
+}
+
+/* Column wrapper (Granted, Pending, Available) */
+.interest-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Column heading */
+.column-title {
+  font-weight: 800;
+  font-size: 1rem;
+  margin-bottom: 6px;
+  color: var(--bs-body-color);
+  opacity: 0.9;
+}
+
+/* List: vertical stack of rows */
+.interest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Each interest as a row: [checkbox/spacer] [name] [pill] */
+.interest-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: background .08s ease, transform .08s ease;
+  background: var(--bs-secondary-bg);
+}
+
+/* Hover for interactive rows */
+.interest-row:hover {
+  background: rgba(255,255,255,0.01);
+}
+
+/* Checkbox styling (visible for available items) */
+.chip-input {
+  width: 18px;
+  height: 18px;
+  margin-left: 8px;
+  cursor: pointer;
+  accent-color: var(--ui-primary);
+}
+
+/* When checkbox is not present (granted/pending), keep spacer */
+.row-spacer {
+  width: 18px;
+  height: 18px;
+  margin-left: 8px;
+}
+
+/* Name area */
+.interest-name {
+  font-weight: 700;
+  color: var(--bs-body-color);
+}
+
+/* Pills on the right */
+.pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.86rem;
+  min-width: 74px;
+  text-align: center;
+  color: var(--pill-text);
+}
+
+/* Granted = green (good contrast with white text) */
+.pill-granted {
+  background: linear-gradient(90deg, #34d399, #059669); /* mint → emerald */
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 6px 14px rgba(5,150,105,0.18);
+}
+
+/* Pending = warm yellow / amber (use dark text for contrast) */
+.pill-pending {
+  background: linear-gradient(90deg, #f59e0b, #d97706); /* amber tones */
+  color: #0f1720; /* dark text so label is readable on yellow */
+  border: none;
+  box-shadow: 0 6px 14px rgba(217,119,6,0.14);
+}
+
+/* Read-only look for granted/pending rows — theme aware */
+.granted .interest-name,
+.pending .interest-name {
+  color: var(--bs-body-color);
+  font-weight: 800;
+}
+
+
+/* When user checks an available item, highlight row slightly */
+.chip-input:checked ~ .interest-name {
+  background: rgba(37,99,235,0.04);
+  border-radius: 6px;
+  padding-left: 6px;
+}
+
+/* Button area */
+.form-actions {
+  display:flex;
+  justify-content:flex-end;
+  margin-top: 14px;
+}
+/* Match "Request Selected" button to Manage Interests gradient */
+.btn-primary,
+.btn-save-interests {
+  background: linear-gradient(180deg, #4f46e5, #4338ca) !important;
+  border: none;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(67, 56, 202, 0.35);
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
+
+.btn-primary:hover,
+.btn-save-interests:hover {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+}
+
+.btn-primary:focus,
+.btn-save-interests:focus {
+  outline: 3px solid rgba(79, 70, 229, 0.4);
+  outline-offset: 2px;
+}
+
+.btn-primary:active,
+.btn-save-interests:active {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+
+/* Small screens: switch to single column stack for readability */
+@media (max-width: 880px) {
+  .columns-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===============================
+   DARK MODE CONTRAST FIX
+   =============================== */
+
+/* Make rows readable in dark mode */
+[data-bs-theme="dark"] .interest-row {
+  background: #1e293b; /* slate-800 */
+}
+
+/* Strong readable text */
+[data-bs-theme="dark"] .interest-name {
+  color: #e5e7eb; /* light gray */
+}
+
+/* Granted should pop */
+[data-bs-theme="dark"] .interest-row.granted {
+  background: linear-gradient(
+    90deg,
+    rgba(16,185,129,0.18),
+    rgba(16,185,129,0.08)
+  );
+}
+
+/* Pending should be visible but distinct */
+[data-bs-theme="dark"] .interest-row.pending {
+  background: linear-gradient(
+    90deg,
+    rgba(245,158,11,0.18),
+    rgba(245,158,11,0.08)
+  );
+}
+
+/* Empty / No access rows slightly muted, not dead */
+[data-bs-theme="dark"] .interest-row .muted,
+[data-bs-theme="dark"] .interest-row:has(.muted) {
+  color: #9ca3af;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section">
+  <h1 class="section-title">Teams</h1>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      Please select the Team you will be working with.
+    </div>
+  </div>
+
+    <form id="interests-form" method="post" action="{{ url_for('user_interests') }}">
+      {{ form.hidden_tag() }}
+
+      <div class="columns-grid">
+        <!-- Granted column -->
+        <div class="interest-column">
+          <div class="column-title">Granted</div>
+          <div class="interest-list">
+            {% if granted_interests %}
+              {% for i in granted_interests %}
+                <div class="interest-row granted">
+                  <!-- spacer for checkbox column so columns align -->
+                  <div class="row-spacer" aria-hidden="true"></div>
+
+                  <div class="interest-name">{{ i.name }}</div>
+
+                  <div class="pill pill-granted">Granted</div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="interest-row">
+                <div class="row-spacer" aria-hidden="true"></div>
+                <div class="interest-name muted">No Access</div>
+                <div></div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Pending column -->
+        <div class="interest-column">
+          <div class="column-title">Pending</div>
+          <div class="interest-list">
+            {% if pending_interests %}
+              {% for i in pending_interests %}
+                <div class="interest-row pending">
+                  <input type="hidden" name="interests" value="{{ i.id }}">
+                  <div class="row-spacer" aria-hidden="true"></div>
+
+                  <div class="interest-name">{{ i.name }}</div>
+
+                  <div class="pill pill-pending">Pending</div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="interest-row">
+                <div class="row-spacer" aria-hidden="true"></div>
+                <div class="interest-name muted">No Pending Requests</div>
+                <div></div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Available to request column -->
+        <div class="interest-column">
+          <div class="column-title">Available to Request</div>
+          <div class="interest-list">
+            {% if available_interests %}
+              {% for i in available_interests %}
+                <div class="interest-row available">
+                  <!-- actual checkbox so form behavior is unchanged -->
+                  <div>
+                    <input type="checkbox"
+                           id="a-{{ i.id }}"
+                           name="interests"
+                           value="{{ i.id }}"
+                           class="chip-input">
+                  </div>
+
+                  <label class="interest-name" for="a-{{ i.id }}">{{ i.name }}</label>
+
+                  <div aria-hidden="true"></div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="interest-row">
+                <div class="row-spacer" aria-hidden="true"></div>
+                <div class="interest-name muted">No Teams Available</div>
+                <div></div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-save-interests">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const counter = document.getElementById('selected-count');
+
+  function updateCount() {
+    // count checkboxes inside available column only (so granted/pending don't affect)
+    const checked = document.querySelectorAll('.chip-input:checked').length;
+    counter.textContent = checked === 0 ? 'No interests selected'
+                     : checked === 1 ? '1 interest selected'
+                     : `${checked} interests selected`;
+  }
+
+  document.querySelectorAll('.chip-input').forEach(cb => cb.addEventListener('change', updateCount));
+  updateCount();
+});
+</script>
+{% endblock %}

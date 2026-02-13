@@ -1,0 +1,533 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+.questions-page {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.page-header {
+    background: linear-gradient(135deg, #1e1e2d, #1e1e2d);
+    border-radius: 16px;
+    padding: 24px 28px;
+    color: white;
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.page-header p {
+    margin: 6px 0 0;
+    opacity: 0.9;
+}
+
+.assignment-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255,255,255,0.15);
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-top: 12px;
+    font-size: 0.9rem;
+}
+
+.assignment-badge i {
+    margin-right: 8px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.btn-add {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-add:hover {
+    background: rgba(255,255,255,0.3);
+    color: white;
+}
+
+.btn-back-header {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.btn-back-header:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.questions-container {
+    background: linear-gradient(135deg, #1a1d24, #252830);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.questions-list {
+    padding: 20px;
+}
+
+.question-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: all 0.2s ease;
+}
+
+.question-card:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.15);
+}
+
+.question-card:last-child {
+    margin-bottom: 0;
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.question-number {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.question-points {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #fbbf24;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.question-text {
+    color: #e2e8f0;
+    font-size: 1.05rem;
+    font-weight: 500;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+    .options-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+}
+
+.option-item.correct {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #10b981;
+}
+
+.option-letter {
+    font-weight: 700;
+    margin-right: 10px;
+    min-width: 20px;
+}
+
+.option-item.correct .option-letter {
+    color: #10b981;
+}
+
+.question-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.explanation-text {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    flex: 1;
+}
+
+.explanation-text i {
+    margin-right: 6px;
+    color: #60a5fa;
+}
+
+.question-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: #818cf8;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.btn-edit:hover {
+    background: rgba(99, 102, 241, 0.3);
+    color: #a5b4fc;
+}
+
+.btn-delete {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #f87171;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.btn-delete:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: rgba(255,255,255,0.5);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.4;
+}
+
+.empty-state h3 {
+    margin-bottom: 12px;
+    color: #e2e8f0;
+}
+
+.questions-summary {
+    background: rgba(0,0,0,0.3);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.summary-stats {
+    display: flex;
+    gap: 24px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.9rem;
+}
+
+.stat-item strong {
+    color: #1e1e2d;
+}
+
+.btn.btn-add.btn-empty-action {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  border-radius: 10px;
+}
+
+/* ===============================
+   GLOBAL ICON + TEXT FIXES
+   (NO LAYOUT CHANGES)
+================================ */
+
+/* ---------- QUESTIONS HEADER ---------- */
+
+/* Question count badge */
+.questions-header .badge {
+    color: #ffffff;
+    background: rgba(255,255,255,0.25);
+}
+
+/* Header buttons */
+.questions-header .btn,
+.questions-header .btn i {
+    color: #ffffff;
+}
+
+/* ---------- EMPTY STATE ---------- */
+
+.empty-state h3 {
+    color: #ffffff;
+}
+
+.empty-state p {
+    color: rgba(255,255,255,0.7);
+}
+
+/* Fix huge icon */
+.empty-state i {
+    font-size: 3rem;   /* reduced from huge */
+    opacity: 0.45;
+}
+
+/* ---------- LIGHT MODE OVERRIDES ---------- */
+
+[data-bs-theme="light"] .questions-container {
+    background: #ffffff;
+    border-color: #e5e7eb;
+}
+
+[data-bs-theme="light"] .page-header {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+[data-bs-theme="light"] .page-header p {
+    color: #475569;
+}
+
+[data-bs-theme="light"] .assignment-badge {
+    background: #e5e7eb;
+    color: #0f172a;
+}
+
+/* Header buttons in light mode */
+[data-bs-theme="light"] .btn-add,
+[data-bs-theme="light"] .btn-back-header {
+    color: #0f172a;
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+[data-bs-theme="light"] .btn-add i,
+[data-bs-theme="light"] .btn-back-header i {
+    color: #0f172a;
+}
+
+/* Empty state */
+[data-bs-theme="light"] .empty-state h3 {
+    color: #0f172a;
+}
+
+[data-bs-theme="light"] .empty-state p {
+    color: #475569;
+}
+
+[data-bs-theme="light"] .empty-state i {
+    color: #94a3b8;
+}
+
+/* ---------- QUESTIONS SUMMARY ---------- */
+
+[data-bs-theme="light"] .questions-summary {
+    background: #f8fafc;
+    border-color: #e5e7eb;
+}
+
+[data-bs-theme="light"] .stat-item {
+    color: #475569;
+}
+
+[data-bs-theme="light"] .stat-item strong {
+    color: #0f172a;
+}
+
+/* ---------- BUTTONS INSIDE CARDS ---------- */
+
+[data-bs-theme="light"] .btn-edit,
+[data-bs-theme="light"] .btn-delete {
+    color: #0f172a;
+}
+
+[data-bs-theme="light"] .btn-edit i,
+[data-bs-theme="light"] .btn-delete i {
+    color: inherit;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}" class="active">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Teams</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Teams Requests</a></li>
+            <li><a href="{{ url_for('admin_mandatory_courses') }}">Mandatory Courses</a></li>
+        </ul>
+    </div>
+
+    <div class="questions-page">
+        <div class="page-header">
+            <h1><i class="fas fa-list-ol me-2"></i>Manage Questions</h1>
+            <p>Add, edit, and organize questions for this assignment</p>
+            <div class="assignment-badge">
+                <i class="fas fa-clipboard-check"></i>
+                {{ assignment.title }}
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('admin_add_question', assignment_id=assignment.id) }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-edit"></i>Add Question
+                </a>
+                <a href="{{ url_for('admin_edit_assignment', assignment_id=assignment.id) }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-edit"></i>Back to Settings
+                </a>
+            </div>
+        </div>
+
+        <div class="questions-container">
+            {% if not questions %}
+            <div class="empty-state">
+                
+                <h3>No Questions Yet</h3>
+                <p>Add questions to make this assignment available to users.</p>
+                
+            </div>
+            {% else %}
+            <div class="questions-list">
+                {% for question in questions %}
+                <div class="question-card">
+                    <div class="question-header">
+                        <span class="question-number">Q{{ loop.index }}</span>
+                        <span class="question-points">
+                            <i class="fas fa-star"></i>
+                            {{ question.points }} point{% if question.points != 1 %}s{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="question-text">{{ question.question_text }}</div>
+                    
+                    <div class="options-grid">
+                        {% if question.option_a %}
+                        <div class="option-item {% if question.correct_answer == 'A' %}correct{% endif %}">
+                            <span class="option-letter">A.</span>
+                            {{ question.option_a }}
+                            {% if question.correct_answer == 'A' %}<i class="fas fa-check ms-auto"></i>{% endif %}
+                        </div>
+                        {% endif %}
+                        {% if question.option_b %}
+                        <div class="option-item {% if question.correct_answer == 'B' %}correct{% endif %}">
+                            <span class="option-letter">B.</span>
+                            {{ question.option_b }}
+                            {% if question.correct_answer == 'B' %}<i class="fas fa-check ms-auto"></i>{% endif %}
+                        </div>
+                        {% endif %}
+                        {% if question.option_c %}
+                        <div class="option-item {% if question.correct_answer == 'C' %}correct{% endif %}">
+                            <span class="option-letter">C.</span>
+                            {{ question.option_c }}
+                            {% if question.correct_answer == 'C' %}<i class="fas fa-check ms-auto"></i>{% endif %}
+                        </div>
+                        {% endif %}
+                        {% if question.option_d %}
+                        <div class="option-item {% if question.correct_answer == 'D' %}correct{% endif %}">
+                            <span class="option-letter">D.</span>
+                            {{ question.option_d }}
+                            {% if question.correct_answer == 'D' %}<i class="fas fa-check ms-auto"></i>{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="question-footer">
+                        {% if question.explanation %}
+                        <div class="explanation-text">
+                            <i class="fas fa-lightbulb"></i>
+                            {{ question.explanation[:100] }}{% if question.explanation|length > 100 %}...{% endif %}
+                        </div>
+                        {% else %}
+                        <div class="explanation-text" style="opacity: 0.4;">
+                            <i class="fas fa-lightbulb"></i>
+                            No explanation provided
+                        </div>
+                        {% endif %}
+                        
+                        <div class="question-actions">
+                            <a href="{{ url_for('admin_edit_question', question_id=question.id) }}" class="btn btn-edit">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </a>
+                            <form method="post" action="{{ url_for('admin_delete_question', question_id=question.id) }}" style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-delete" onclick="return confirm('Delete this question?')">
+                                    <i class="fas fa-trash me-1"></i>Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="questions-summary">
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-list-ol"></i>
+                        <strong>{{ questions|length }}</strong> question{% if questions|length != 1 %}s{% endif %}
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-star"></i>
+                        <strong>{{ questions|sum(attribute='points') }}</strong> total points
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-percentage"></i>
+                        Pass: <strong>{{ assignment.passing_score }}%</strong>
+                    </div>
+                </div>
+                <a href="{{ url_for('admin_add_question', assignment_id=assignment.id) }}" class="btn btn-sm btn-primary" style="background: linear-gradient(135deg, #1e1e2d, #1e1e2d); border: none;">
+                    <i class="fas fa-edit"></i>Add Question
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

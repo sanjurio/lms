@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">Learning Platform</h1>
+            <p class="hero-subtitle">
+                A centralized learning and knowledge platform designed to help individuals and teams grow skills, share expertise, and stay aligned.
+            </p>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('user_dashboard') }}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Register</a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline btn-lg ms-2">Sign In</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Platform -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Why Choose Our Platform?</h2>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="text-center mb-3">Structured Learning</h3>
+                        <p class="text-center">
+                            Access well-organized courses and materials created to support consistent learning across teams and individuals.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-route"></i>
+                        </div>
+                        <h3 class="text-center mb-3">Role-Based Access</h3>
+                        <p class="text-center">
+                            Content visibility adapts based on user roles, ensuring the right information reaches the right audience.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-laptop-code"></i>
+                        </div>
+                        <h3 class="text-center mb-3">Practical Resources</h3>
+                        <p class="text-center">
+                            Learn through real examples, guided exercises, documentation, and practical resources designed for everyday work.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3 class="text-center mb-3">Collaborative Learning</h3>
+                        <p class="text-center">
+                            Share knowledge, align with teams, and learn collaboratively within a unified platform.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Topics -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Featured Topics</h2>
+        <div class="course-grid">
+            <div class="card">
+                <div class="card-body">
+                    <div class="feature-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h3 class="text-center">Core Skills</h3>
+                    <p>
+                        Build a strong foundation with essential concepts, workflows, and best practices relevant to your role.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="feature-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h3 class="text-center">Processes & Tools</h3>
+                    <p>
+                        Understand internal tools, systems, and processes to work more efficiently and confidently.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="feature-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3 class="text-center">Knowledge Sharing</h3>
+                    <p>
+                        Learn from shared experiences, documentation, and insights contributed by teams across the organization.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">How It Works</h2>
+        <div class="row">
+            <div class="col-md-3 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <h4>1. Create an Account</h4>
+                        <p class="mt-auto">
+                            Sign up securely and complete your profile.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-thumbs-up"></i>
+                        </div>
+                        <h4>2. Get Access</h4>
+                        <p class="mt-auto">
+                            Access is granted based on role and approval requirements.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <h4>3. Choose Teams</h4>
+                        <p class="mt-auto">
+                            Select teams relevant to your work.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="feature-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h4>4. Start Learning</h4>
+                        <p class="mt-auto">
+                            Explore courses, materials, and shared knowledge.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="section">
+    <div class="container">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <h2 class="mb-4">Ready to Get Started?</h2>
+                <p class="mb-4">
+                    Join the platform to access learning resources, collaborate with teams, and grow your expertise.
+                </p>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('user_dashboard') }}" class="btn btn-primary btn-lg">Go to Your Dashboard</a>
+                {% else %}
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Register</a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline btn-lg ms-2">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

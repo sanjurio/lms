@@ -1,0 +1,896 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+.assignment-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .assignment-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sidebar-card {
+    background: linear-gradient(135deg, #1e1e2d, #1e1e2d);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    position: sticky;
+    top: 24px;
+}
+
+.sidebar-header {
+    background: linear-gradient(135deg, #1e1e2d, #1e1e2d);
+    padding: 20px 24px;
+    color: white;
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.sidebar-header p {
+    margin: 6px 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.course-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255,255,255,0.15);
+    padding: 5px 12px;
+    border-radius: 16px;
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+
+.course-badge i {
+    margin-right: 6px;
+}
+
+.sidebar-body {
+    padding: 20px 24px;
+}
+
+.form-section {
+    margin-bottom: 20px;
+}
+
+.form-section:last-child {
+    margin-bottom: 0;
+}
+
+.form-section-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #a78bfa;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(167, 139, 250, 0.3);
+    display: flex;
+    align-items: center;
+}
+
+.form-section-title i {
+    margin-right: 8px;
+}
+
+.setting-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+}
+
+.setting-card:last-child {
+    margin-bottom: 0;
+}
+
+.setting-card label {
+    font-weight: 500;
+    color: #e2e8f0;
+    margin-bottom: 6px;
+    display: block;
+    font-size: 0.9rem;
+}
+
+.setting-card .form-control {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    color: #fff;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    width: 100%;
+}
+
+.setting-card .form-control:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+    outline: none;
+}
+
+.setting-card .form-control::placeholder {
+    color: rgba(255,255,255,0.4);
+}
+
+.setting-card textarea.form-control {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.helper-text {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+    margin-top: 4px;
+}
+
+.settings-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 768px) {
+    .settings-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.toggle-setting {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.toggle-setting .toggle-label {
+    display: flex;
+    align-items: center;
+}
+
+.toggle-setting .toggle-label i {
+    margin-right: 10px;
+    color: #1e1e2d;
+    font-size: 1.1rem;
+}
+
+.toggle-setting .toggle-label span {
+    font-weight: 500;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 16px;
+}
+
+.btn-save {
+    background: linear-gradient(135deg, #1e1e2d, #1e1e2d);
+    border: none;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    color: white;
+    transition: all 0.3s ease;
+    flex: 1;
+}
+
+.btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+    color: white;
+}
+
+.btn-back {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 8px;
+    color: #e2e8f0;
+}
+
+.btn-back:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+}
+
+.questions-panel {
+    background: linear-gradient(135deg, #1a1d24, #252830);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.questions-header {
+    background: linear-gradient(135deg, #1e1e2d, #1e1e2d);
+    padding: 20px 24px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.questions-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.questions-header .badge {
+    background: rgba(255,255,255,0.2);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-left: 8px;
+}
+
+.btn-add-question {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-add-question:hover {
+    background: rgba(255,255,255,0.3);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.questions-body {
+    padding: 20px 24px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.question-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.question-item:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.15);
+}
+
+.question-item:last-child {
+    margin-bottom: 0;
+}
+
+.question-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.question-number {
+    color: #10b981;
+    font-weight: 700;
+    margin-right: 6px;
+}
+
+.question-text {
+    color: #e2e8f0;
+    font-weight: 500;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.question-meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.question-meta span {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+}
+
+.question-meta i {
+    margin-right: 3px;
+}
+
+/* FIX: question meta visibility in light mode */
+[data-bs-theme="light"] .question-meta span {
+    color: #475569; /* slate-600 */
+}
+
+[data-bs-theme="light"] .question-meta i {
+    color: #2563eb; /* blue-600 */
+}
+
+.question-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.btn-edit-question {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: #818cf8;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.btn-edit-question:hover {
+    background: rgba(99, 102, 241, 0.3);
+    color: #a5b4fc;
+}
+
+.btn-delete-question {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #f87171;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.btn-delete-question:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+
+.no-questions {
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(255,255,255,0.5);
+}
+
+.no-questions i {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.no-questions p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.danger-zone {
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+}
+
+.danger-zone h4 {
+    color: #f87171;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.danger-zone h4 i {
+    margin-right: 8px;
+}
+
+.btn-delete-assignment {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #f87171;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.btn-delete-assignment:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.questions-footer {
+    padding: 16px 24px;
+    background: rgba(0,0,0,0.2);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.questions-summary {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+}
+
+.questions-summary strong {
+    color: #10b981;
+}
+
+/* ===== LIGHT MODE FIX: EDIT ASSIGNMENT ===== */
+
+[data-bs-theme="light"] .sidebar-card,
+[data-bs-theme="light"] .questions-panel {
+    background: #ffffff;
+    border-color: #e5e7eb;
+}
+
+[data-bs-theme="light"] .sidebar-header,
+[data-bs-theme="light"] .questions-header {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+[data-bs-theme="light"] .setting-card,
+[data-bs-theme="light"] .question-item {
+    background: #f9fafb;
+    border-color: #e5e7eb;
+}
+
+[data-bs-theme="light"] .setting-card label,
+[data-bs-theme="light"] .question-text,
+[data-bs-theme="light"] .question-meta,
+[data-bs-theme="light"] .form-section-title {
+    color: #0f172a;
+}
+
+[data-bs-theme="light"] .questions-footer {
+    background: #f8fafc;
+    border-color: #e5e7eb;
+}
+
+/* =========================================
+   LIGHT MODE – COLOR ONLY FIX (NO LAYOUT)
+========================================= */
+
+[data-bs-theme="light"] .sidebar-card,
+[data-bs-theme="light"] .questions-panel {
+    background: #ffffff;
+    border-color: #e5e7eb;
+}
+
+[data-bs-theme="light"] .sidebar-header,
+[data-bs-theme="light"] .questions-header {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+[data-bs-theme="light"] .course-badge {
+    background: #e5e7eb;
+    color: #0f172a;
+}
+
+[data-bs-theme="light"] .setting-card,
+[data-bs-theme="light"] .question-item,
+[data-bs-theme="light"] .toggle-setting {
+    background: #f9fafb;
+    border-color: #e5e7eb;
+}
+
+/* Text & labels */
+[data-bs-theme="light"] .setting-card label,
+[data-bs-theme="light"] .toggle-setting span,
+[data-bs-theme="light"] .question-text,
+[data-bs-theme="light"] .form-section-title {
+    color: #0f172a;
+}
+
+/* Helper + muted text */
+[data-bs-theme="light"] .helper-text,
+[data-bs-theme="light"] .question-meta,
+[data-bs-theme="light"] .no-questions,
+[data-bs-theme="light"] .questions-summary {
+    color: #475569;
+}
+
+/* Icons – NEVER let them be black */
+[data-bs-theme="light"] .toggle-label i,
+[data-bs-theme="light"] label i,
+[data-bs-theme="light"] .questions-header i,
+[data-bs-theme="light"] .question-meta i {
+    color: #2563eb;
+}
+
+/* Inputs */
+[data-bs-theme="light"] .form-control {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #cbd5f5;
+}
+
+[data-bs-theme="light"] .form-control::placeholder {
+    color: #94a3b8;
+}
+
+/* Footer strip */
+[data-bs-theme="light"] .questions-footer {
+    background: #f8fafc;
+    border-color: #e5e7eb;
+}
+
+/* Buttons (color only) */
+[data-bs-theme="light"] .btn-save {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+[data-bs-theme="light"] .btn-back {
+    background: #e5e7eb;
+    color: #0f172a;
+}
+
+/* Danger zone */
+[data-bs-theme="light"] .danger-zone {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+/* =========================================
+   DARK MODE – VISIBILITY & CONTRAST FIX
+   (NO layout changes)
+========================================= */
+
+[data-bs-theme="dark"] .questions-header,
+[data-bs-theme="dark"] .sidebar-header {
+    color: #ffffff;
+}
+
+/* Question count badge */
+[data-bs-theme="dark"] .questions-header .badge {
+    background: #334155;       /* slate-700 */
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Full View & Add buttons */
+[data-bs-theme="dark"] .btn-add-question {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.35);
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .btn-add-question:hover {
+    background: rgba(255,255,255,0.25);
+    color: #ffffff;
+}
+
+/* Icons inside buttons */
+[data-bs-theme="dark"] .btn-add-question i {
+    color: #ffffff;
+}
+
+/* Question number (Q1, Q2, etc.) */
+[data-bs-theme="dark"] .question-number {
+    color: #22c55e; /* bright green */
+}
+
+/* Question meta icons (check, star) */
+[data-bs-theme="dark"] .question-meta i {
+    color: #60a5fa; /* blue */
+}
+
+/* Section icons (info, sliders, etc.) */
+[data-bs-theme="dark"] .form-section-title i {
+    color: #a78bfa;
+}
+
+/* Toggle icons (shuffle, active) */
+[data-bs-theme="dark"] .toggle-label i {
+    color: #38bdf8;
+}
+
+/* Course badge icon */
+[data-bs-theme="dark"] .course-badge i {
+    color: #ffffff;
+}
+
+/* Empty state question icon */
+[data-bs-theme="dark"] .no-questions i {
+    color: rgba(255,255,255,0.6);
+}
+
+
+/* ============================= */
+/* QUESTIONS PANEL COLOR FIXES   */
+/* ============================= */
+
+/* Questions title + icon */
+.questions-header h3,
+.questions-header h3 i {
+    color: #e5e7eb;
+}
+
+/* Light mode */
+[data-bs-theme="light"] .questions-header h3,
+[data-bs-theme="light"] .questions-header h3 i {
+    color: #0f172a;
+}
+
+/* Questions count badge (0) */
+.questions-header .badge {
+    background: rgba(255,255,255,0.25);
+    color: #ffffff;
+}
+
+/* Light mode badge */
+[data-bs-theme="light"] .questions-header .badge {
+    background: #e5e7eb;
+    color: #0f172a;
+}
+
+/* Full View + Add buttons (dark mode) */
+.btn-add-question {
+    color: #ffffff;
+}
+
+.btn-add-question i {
+    color: #ffffff;
+}
+
+/* Light mode buttons */
+[data-bs-theme="light"] .btn-add-question {
+    background: #f8fafc;
+    border-color: #e5e7eb;
+    color: #0f172a;
+}
+
+[data-bs-theme="light"] .btn-add-question i {
+    color: #0f172a;
+}
+
+/* Hover (light mode) */
+[data-bs-theme="light"] .btn-add-question:hover {
+    background: #e5e7eb;
+}
+
+/* Empty state text + icon */
+.no-questions {
+    color: rgba(255,255,255,0.6);
+}
+
+.no-questions i {
+    color: rgba(255,255,255,0.5);
+}
+
+/* Light mode empty state */
+[data-bs-theme="light"] .no-questions {
+    color: #334155;
+}
+
+[data-bs-theme="light"] .no-questions i {
+    color: #64748b;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}" class="active">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Teams</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Teams Requests</a></li>
+            <li><a href="{{ url_for('admin_mandatory_courses') }}">Mandatory Courses</a></li>
+        </ul>
+    </div>
+
+    <div class="admin-container" style="max-width: 1200px; margin: 0 auto;">
+        <div class="assignment-layout">
+            <div class="sidebar-card">
+                <div class="sidebar-header">
+                    <h2><i class="section"></i>Assignment Settings</h2>
+                    <p>Configure assessment options</p>
+                    <div class="course-badge">
+                        <i class="fas fa-book"></i>
+                        {{ assignment.course.title }}
+                    </div>
+                </div>
+
+                <div class="sidebar-body">
+                    <form method="post">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="fas fa-info-circle"></i>
+                                Basic Information
+                            </div>
+                            
+                            <div class="setting-card">
+                                <label for="title">Assignment Title</label>
+                                {{ form.title(class="form-control", placeholder="e.g., Final Assessment") }}
+                                {% for error in form.title.errors %}
+                                    <span class="text-danger" style="font-size: 0.8rem;">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+
+                            <div class="setting-card">
+                                <label for="description">Description <span class="text-muted">(optional)</span></label>
+                                {{ form.description(class="form-control", rows=2, placeholder="Brief description...") }}
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="fas fa-sliders-h"></i>
+                                Assessment Rules
+                            </div>
+                            
+                            <div class="settings-row">
+                                <div class="setting-card">
+                                    <label for="passing_score">
+                                        <i class="fas fa-percentage text-success me-1"></i> Passing Score
+                                    </label>
+                                    {{ form.passing_score(class="form-control", min=0, max=100) }}
+                                    <div class="helper-text">Min % to pass</div>
+                                </div>
+
+                                <div class="setting-card">
+                                    <label for="time_limit_minutes">
+                                        <i class="fas fa-clock text-warning me-1"></i> Time Limit
+                                    </label>
+                                    {{ form.time_limit_minutes(class="form-control", min=0, placeholder="0") }}
+                                    <div class="helper-text">Minutes (0 = no limit)</div>
+                                </div>
+                            </div>
+
+                            <div class="setting-card">
+                                <label for="max_attempts">
+                                    <i class="fas fa-redo text-info me-1"></i> Max Attempts
+                                </label>
+                                {{ form.max_attempts(class="form-control", min=0, placeholder="0") }}
+                                <div class="helper-text">0 = unlimited retries</div>
+                            </div>
+
+                            <div class="toggle-setting mt-3">
+                                <div class="toggle-label">
+                                    <i class="fas fa-random text-purple me-1"></i>
+                                    <span>Shuffle Questions</span>
+                                </div>
+                                {{ form.shuffle_questions(class="form-check-input", style="width: 46px; height: 24px;") }}
+                            </div>
+
+                            <div class="toggle-setting mt-3">
+                                <div class="toggle-label">
+                                    <i class="fas fa-exchange-alt text-info me-1"></i>
+                                    <span>Shuffle Options (A, B, C, D)</span>
+                                </div>
+                                {{ form.shuffle_options(class="form-check-input", style="width: 46px; height: 24px;") }}
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="toggle-setting">
+                                <div class="toggle-label">
+                                    <i class="fas fa-toggle-on"></i>
+                                    <span>Active</span>
+                                </div>
+                                {{ form.is_active(class="form-check-input", style="width: 46px; height: 24px;") }}
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-save">
+                                <i class="fas fa-save me-2"></i>Save
+                            </button>
+                            <a href="{{ url_for('admin_lessons', course_id=assignment.course_id) }}" class="btn btn-back">
+                                <i class="fas fa-arrow-left me-1"></i>Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div>
+                <div class="questions-panel">
+                    <div class="questions-header">
+                        <h3>
+                            <i class="fas fa-list-ol me-2"></i>Questions
+                            <span class="badge">{{ questions|length }}</span>
+                        </h3>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('admin_manage_questions', assignment_id=assignment.id) }}" class="btn btn-add-question" style="background: rgba(255,255,255,0.1);">
+                                <i class="fas fa-expand me-1"></i>Full View
+                            </a>
+                            <a href="{{ url_for('admin_add_question', assignment_id=assignment.id) }}" class="btn btn-add-question">
+                                <i class="fas fa-plus me-1"></i>Add
+                            </a>
+                        </div>
+                    </div>
+                    <div class="questions-body">
+                        {% if not questions %}
+                        <div class="no-questions">
+                            <i class="fas fa-question-circle"></i>
+                            <p>No questions added yet.<br>Add questions to activate this assignment.</p>
+                        </div>
+                        {% else %}
+                        {% for question in questions %}
+                        <div class="question-item">
+                            <div class="question-content">
+                                <div>
+                                    <span class="question-number">Q{{ loop.index }}.</span>
+                                    <span class="question-text">{{ question.question_text[:60] }}{% if question.question_text|length > 60 %}...{% endif %}</span>
+                                </div>
+                                <div class="question-meta">
+                                    <span><i class="fas fa-check-circle"></i>{{ question.correct_answer }}</span>
+                                    <span><i class="fas fa-star"></i>{{ question.points }} pt{% if question.points != 1 %}s{% endif %}</span>
+                                </div>
+                            </div>
+                            <div class="question-actions">
+                                <a href="{{ url_for('admin_edit_question', question_id=question.id) }}" class="btn btn-sm btn-primary" title="Edit">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <form method="post" action="{{ url_for('admin_delete_question', question_id=question.id) }}" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Delete this question?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                    {% if questions %}
+                    <div class="questions-footer">
+                        <span class="questions-summary">
+                            <strong>{{ questions|length }}</strong> question{% if questions|length != 1 %}s{% endif %} |
+                            <strong>{{ questions|sum(attribute='points') }}</strong> points |
+                            Pass: <strong>{{ assignment.passing_score }}%</strong>
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="danger-zone">
+                    <form method="post" action="{{ url_for('admin_delete_assignment', assignment_id=assignment.id) }}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this assignment and all questions? This cannot be undone.')">
+                            <i class="fas fa-trash"></i>Delete Assignment
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

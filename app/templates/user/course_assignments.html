@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="section">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('user_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('view_course', course_id=course.id) }}">{{ course.title }}</a></li>
+            <li class="breadcrumb-item active">Assignments</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-tasks me-2"></i>{{ course.title }} - Assignments</h1>
+        <a href="{{ url_for('view_course', course_id=course.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Course
+        </a>
+    </div>
+
+    {% if not assignment_status %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        There are no assignments available for this course yet. Please check back later or continue with the course lessons.
+    </div>
+    <div class="text-center mt-3">
+        <a href="{{ url_for('view_course', course_id=course.id) }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Course
+        </a>
+    </div>
+    {% else %}
+    <div class="row">
+        {% for item in assignment_status %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ item.assignment.title }}</h5>
+                    {% if item.has_passed %}
+                    <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Passed</span>
+                    {% elif item.best_score is not none %}
+                    <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i> Attempted</span>
+                    {% else %}
+                    <span class="badge bg-secondary"><i class="fas fa-circle me-1"></i> Not Started</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if item.assignment.description %}
+                    <p class="card-text">{{ item.assignment.description }}</p>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <div class="row text-muted small">
+                            <div class="col-6">
+                                <i class="fas fa-percent me-1"></i> Passing Score: {{ item.assignment.passing_score }}%
+                            </div>
+                            <div class="col-6">
+                                <i class="fas fa-question-circle me-1"></i> Questions: {{ item.assignment.questions.count() }}
+                            </div>
+                        </div>
+                        <div class="row text-muted small mt-2">
+                            <div class="col-6">
+                                {% if item.assignment.time_limit_minutes %}
+                                <i class="fas fa-clock me-1"></i> Time Limit: {{ item.assignment.time_limit_minutes }} min
+                                {% else %}
+                                <i class="fas fa-clock me-1"></i> No Time Limit
+                                {% endif %}
+                            </div>
+                            <div class="col-6">
+                                {% if item.assignment.max_attempts > 0 %}
+                                <i class="fas fa-redo me-1"></i> Attempts: {{ item.attempts_count }}/{{ item.assignment.max_attempts }}
+                                {% else %}
+                                <i class="fas fa-infinity me-1"></i> Unlimited Attempts
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if item.best_score is not none %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Best Score</span>
+                            <span class="{% if item.has_passed %}text-success{% else %}text-danger{% endif %}">
+                                {{ item.best_score }}%
+                            </span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar {% if item.has_passed %}bg-success{% else %}bg-danger{% endif %}" 
+                                 role="progressbar" style="width: {{ item.best_score }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    {% if item.can_attempt %}
+                    <a href="{{ url_for('start_assignment', assignment_id=item.assignment.id) }}" class="btn btn-primary w-100">
+                        {% if item.attempts_count == 0 %}
+                        <i class="fas fa-play me-1"></i> Start Assignment
+                        {% else %}
+                        <i class="fas fa-redo me-1"></i> Retry Assignment
+                        {% endif %}
+                    </a>
+                    {% else %}
+                    <button class="btn btn-secondary w-100" disabled>
+                        <i class="fas fa-ban me-1"></i> Max Attempts Reached
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

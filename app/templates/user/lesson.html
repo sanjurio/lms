@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="section">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('user_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('view_course', course_id=course.id) }}">{{ course.title }}</a></li>
+            <li class="breadcrumb-item active">{{ lesson.title }}</li>
+        </ol>
+    </nav>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h1 class="card-title">{{ lesson.title }}</h1>
+                    <p class="text-muted">Lesson {{ lesson.order }} of {{ course.title }}</p>
+                </div>
+                <div class="lesson-status">
+                    {% if lesson_progress and lesson_progress.status == 'completed' %}
+                    <span class="badge bg-success fs-6"><i class="fas fa-check-circle me-1"></i> Completed</span>
+                    
+                    {% endif %}
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="lesson-content">
+                {% if not lesson.content or lesson.content.strip() == '' %}
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-info-circle"></i> No content available</h5>
+                    <p>This lesson doesn't have any content added yet. Please check back later or contact an administrator.</p>
+                </div>
+                {% else %}
+                    {% if lesson.content_type == 'text' %}
+                        {% if can_view_content %}
+                            {{ lesson.content|safe }}
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <h5><i class="fas fa-lock"></i> Access Restricted</h5>
+                                <p>You don't have permission to view the content. Please contact an administrator for access.</p>
+                            </div>
+                        {% endif %}
+                    {% elif lesson.content_type == 'video' %}
+                        {% if can_view_content %}
+                            {% if lesson.video_url %}
+                                <div class="embed-responsive embed-responsive-16by9 mb-3">
+                                    <iframe class="embed-responsive-item" src="{{ lesson.video_url }}" allowfullscreen></iframe>
+                                </div>
+                            {% endif %}
+                            {{ lesson.content|safe }}
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <h5><i class="fas fa-lock"></i> Video Access Restricted</h5>
+                                <p>You don't have permission to view the content. This feature is available for THBS users only.</p>
+                            </div>
+                        {% endif %}
+                    {% elif lesson.content_type == 'mixed' %}
+                        {% if can_view_content.text %}
+                            {{ lesson.content|safe }}
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <h5><i class="fas fa-lock"></i> Your Access Restricted</h5>
+                                <p>You don't have permission to view text content.</p>
+                            </div>
+                        {% endif %}
+                        
+                        {% if lesson.video_url %}
+                            {% if can_view_content.video %}
+                                <div class="embed-responsive embed-responsive-16by9 mt-3">
+                                    <iframe class="embed-responsive-item" src="{{ lesson.video_url }}" allowfullscreen></iframe>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning mt-3">
+                                    <h5><i class="fas fa-lock"></i> Your Access Restricted</h5>
+                                    <p>You don't have permission to view the content. This feature is available for THBS users only.</p>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% else %}
+                        {{ lesson.content|safe }}
+                    {% endif %}
+                {% endif %}
+            </div>
+            
+            {% if media_items %}
+            <div class="lesson-media-section mt-4">
+                {% set youtube_videos = media_items|selectattr('media_type', 'equalto', 'youtube')|list %}
+                {% set files = media_items|selectattr('media_type', 'equalto', 'file')|list %}
+                {% set links = media_items|selectattr('media_type', 'equalto', 'link')|list %}
+                
+                {% set user_can_view_videos = (can_view_content == true) or (can_view_content is mapping and can_view_content.video) %}
+                {% set user_can_view_text = (can_view_content == true) or (can_view_content is mapping and can_view_content.text) %}
+                
+                {% if youtube_videos %}
+                <div class="media-category mb-4">
+                    <h4 class="media-category-title"><i class="fab fa-youtube text-danger me-2"></i>Videos</h4>
+                    {% if user_can_view_videos %}
+                    <div class="video-grid">
+                        {% for video in youtube_videos %}
+                        <div class="video-item">
+                            {% if video.title %}
+                            <h5 class="video-title">{{ video.title }}</h5>
+                            {% endif %}
+                            <div class="video-embed">
+                                <iframe 
+                                    src="{{ video.get_youtube_embed_url() }}" 
+                                    frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowfullscreen>
+                                </iframe>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-lock"></i> Video Access Restricted</h5>
+                        <p>You don't have permission to view video content. This feature is available for THBS users only.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if files %}
+                <div class="media-category mb-4">
+                    <h4 class="media-category-title"><i class="fas fa-file-download text-primary me-2"></i>Downloadable Files</h4>
+                    {% if user_can_view_text %}
+                    <div class="files-list">
+                        {% for file in files %}
+                        <a href="{{ url_for('static', filename=file.file_path) }}" class="file-item" download>
+                            <div class="file-icon">
+                                {% if file.file_name.endswith('.pdf') %}
+                                <i class="fas fa-file-pdf text-danger"></i>
+                                {% elif file.file_name.endswith(('.doc', '.docx')) %}
+                                <i class="fas fa-file-word text-primary"></i>
+                                {% elif file.file_name.endswith(('.xls', '.xlsx')) %}
+                                <i class="fas fa-file-excel text-success"></i>
+                                {% elif file.file_name.endswith(('.ppt', '.pptx')) %}
+                                <i class="fas fa-file-powerpoint text-warning"></i>
+                                {% elif file.file_name.endswith(('.zip', '.rar')) %}
+                                <i class="fas fa-file-archive text-secondary"></i>
+                                {% elif file.file_name.endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
+                                <i class="fas fa-file-image text-info"></i>
+                                {% else %}
+                                <i class="fas fa-file text-muted"></i>
+                                {% endif %}
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">{{ file.title or file.file_name }}</div>
+                                <div class="file-size">{{ file.get_file_size_display() }}</div>
+                            </div>
+                            <div class="file-download">
+                                <i class="fas fa-download"></i>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-lock"></i> File Access Restricted</h5>
+                        <p>You don't have permission to download files. Please contact an administrator for access.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if links %}
+                <div class="media-category mb-4">
+                    <h4 class="media-category-title"><i class="fas fa-external-link-alt text-info me-2"></i>External Resources</h4>
+                    {% if user_can_view_text %}
+                    <div class="links-list">
+                        {% for link in links %}
+                        <a href="{{ link.url }}" class="link-item" target="_blank" rel="noopener noreferrer">
+                            <div class="link-icon">
+                                {% if 'onedrive' in link.url.lower() or 'sharepoint' in link.url.lower() %}
+                                <i class="fab fa-microsoft text-primary"></i>
+                                {% elif 'drive.google' in link.url.lower() %}
+                                <i class="fab fa-google-drive text-success"></i>
+                                {% elif 'dropbox' in link.url.lower() %}
+                                <i class="fab fa-dropbox text-primary"></i>
+                                {% else %}
+                                <i class="fas fa-link text-info"></i>
+                                {% endif %}
+                            </div>
+                            <div class="link-info">
+                                <div class="link-title">{{ link.title or 'External Link' }}</div>
+                                <div class="link-url">{{ link.url|truncate(60) }}</div>
+                            </div>
+                            <div class="link-arrow">
+                                <i class="fas fa-external-link-alt"></i>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-lock"></i> Resource Access Restricted</h5>
+                        <p>You don't have permission to view external resources. Please contact an administrator for access.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-body text-center">
+            <h5 class="mb-3">Lesson Progress</h5>
+            {% if lesson_progress and lesson_progress.status == 'completed' %}
+            <div class="alert alert-success mb-3">
+                <i class="fas fa-check-circle me-2"></i> You have completed this lesson!
+                {% if lesson_progress.completed_at %}
+                <br><small>Completed on {{ lesson_progress.completed_at.strftime('%d %b, %Y at %H:%M') }}</small>
+                {% endif %}
+            </div>
+          
+            {% else %}
+            <p class="text-muted mb-3">Click the button below when you've finished reviewing this lesson.</p>
+            <button id="markCompleteBtn" class="btn btn-success btn-lg" onclick="markLessonComplete({{ lesson.id }})">
+                <i class="fas fa-check-circle me-2"></i> Mark as Complete
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 text-left">
+            {% if prev_lesson %}
+            <a href="{{ url_for('view_lesson', lesson_id=prev_lesson.id) }}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Previous: {{ prev_lesson.title }}
+            </a>
+            {% endif %}
+        </div>
+        <div class="col-md-6 text-right">
+            {% if next_lesson %}
+            <a href="{{ url_for('view_lesson', lesson_id=next_lesson.id) }}" class="btn btn-primary float-end">
+                Next: {{ next_lesson.title }} <i class="fas fa-arrow-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="mt-4 text-center">
+        <a href="{{ url_for('view_course', course_id=course.id) }}" class="btn btn-secondary">
+            <i class="fas fa-list"></i> Back to Course
+        </a>
+    </div>
+</div>
+
+<style>
+/* Inline embedded content styles */
+.embedded-video {
+    margin: 1.5rem 0;
+    max-width: 560px;
+}
+
+.embedded-video .video-caption {
+    color: #50e3c2;
+    margin-bottom: 0.5rem;
+}
+
+.embedded-video .video-container {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #000;
+}
+
+.embedded-video .video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.embedded-file {
+    margin: 1rem 0;
+}
+
+.embedded-file .file-download-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(80, 227, 194, 0.15);
+    border: 1px solid rgba(80, 227, 194, 0.3);
+    border-radius: 8px;
+    color: #50e3c2;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.embedded-file .file-download-link:hover {
+    background: rgba(80, 227, 194, 0.25);
+    transform: translateY(-2px);
+}
+
+.lesson-media-section {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 1.5rem;
+}
+
+.media-category-title {
+    color: #50e3c2;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 560px));
+    gap: 1.5rem;
+}
+
+.video-item {
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    max-width: 560px;
+}
+
+.video-title {
+    color: #fff;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.video-embed {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border-radius: 8px;
+    max-width: 560px;
+}
+
+.video-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.files-list, .links-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.file-item, .link-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+}
+
+.file-item:hover, .link-item:hover {
+    background: rgba(255,255,255,0.08);
+    transform: translateX(4px);
+}
+
+.file-icon, .link-icon {
+    font-size: 2rem;
+    width: 50px;
+    text-align: center;
+}
+
+.file-info, .link-info {
+    flex: 1;
+}
+
+.file-name, .link-title {
+    font-weight: 600;
+    color: #fff;
+}
+
+.file-size, .link-url {
+    font-size: 0.85rem;
+    color: #8899aa;
+}
+
+.file-download, .link-arrow {
+    color: #50e3c2;
+    font-size: 1.2rem;
+}
+
+.text-danger { color: #ff4444 !important; }
+.text-primary { color: #4a90d9 !important; }
+.text-success { color: #28a745 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-info { color: #17a2b8 !important; }
+.text-secondary { color: #6c757d !important; }
+.text-muted { color: #8899aa !important; }
+</style>
+
+<script>
+function showSuccessMessage(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.section').insertBefore(alertDiv, document.querySelector('.section').firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+
+function markLessonComplete(lessonId) {
+    const btn = document.getElementById('markCompleteBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Marking...';
+    
+    fetch(`/api/mark_lesson_complete/${lessonId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage('<i class="fas fa-check-circle me-2"></i> Lesson marked as complete!');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check-circle me-2"></i> Mark as Complete';
+            alert('Error: ' + (data.error || 'Could not mark lesson as complete'));
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle me-2"></i> Mark as Complete';
+        alert('Error: Could not mark lesson as complete');
+    });
+}
+
+function markLessonIncomplete(lessonId) {
+    const btn = document.getElementById('markIncompleteBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Updating...';
+    
+    fetch(`/api/mark_lesson_progress/${lessonId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ status: 'in_progress' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage('<i class="fas fa-undo me-2"></i> Lesson marked as incomplete.');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-undo me-1"></i> Mark as Incomplete';
+            alert('Error: ' + (data.error || 'Could not update lesson status'));
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-undo me-1"></i> Mark as Incomplete';
+        alert('Error: Could not update lesson status');
+    });
+}
+</script>
+{% endblock %}

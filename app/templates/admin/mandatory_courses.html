@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h1 class="section-title">Mandatory Courses</h1>
+
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Teams</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Teams Requests</a></li>
+            <li><a href="{{ url_for('admin_mandatory_courses') }}" class="active">Mandatory Courses</a></li>
+        </ul>
+    </div>
+
+    <div class="admin-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="admin-section-title">Mandatory Course Assignments</h2>
+            <div>
+                <a href="{{ url_for('admin_mandatory_completion') }}" class="btn btn-secondary mr-2">
+                    <i class="fas fa-chart-bar"></i> View Completion Status
+                </a>
+                <a href="{{ url_for('admin_add_mandatory_course') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Assign Mandatory Course
+                </a>
+            </div>
+        </div>
+
+        {% if not mandatory_assignments %}
+        <div class="alert alert-info">
+            <p>No mandatory course assignments yet. Click "Assign Mandatory Course" to make a course required for users.</p>
+        </div>
+        {% else %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Assigned To</th>
+                        <th>Deadline</th>
+                        <th>Assigned On</th>
+                        <th>Assigned By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in mandatory_assignments %}
+                    <tr>
+                        <td>
+                            <strong>{{ assignment.course.title }}</strong>
+                        </td>
+                        <td>
+                            {% if assignment.user_id %}
+                                <span class="badge badge-info">{{ assignment.user.username }}</span>
+                            {% else %}
+                                <span class="badge badge-warning">All Users</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if assignment.deadline %}
+                                {{ assignment.deadline.strftime('%d %b, %Y') }}
+                                {% if assignment.deadline < now %}
+                                    <span class="badge badge-danger">Overdue</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">No deadline</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ assignment.assigned_at.strftime('%d %b, %Y') }}</td>
+                        <td>{{ assignment.assigner.username if assignment.assigner else 'Unknown' }}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('admin_delete_mandatory_course', assignment_id=assignment.id) }}" style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to remove this mandatory assignment?')">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

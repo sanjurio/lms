@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h1 class="section-title">Pending User Approvals</h1>
+
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}" class="active">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Teams</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Teams Requests</a></li>
+            <li><a href="{{ url_for('admin_mandatory_courses') }}">Mandatory Courses</a></li>
+        </ul>
+    </div>
+
+    <div class="admin-container">
+        <h2 class="admin-section-title">Users Awaiting Approval</h2>
+
+        {% if not pending_users %}
+        <div class="alert alert-info">
+            <p>There are no pending user registrations that require approval.</p>
+        </div>
+        {% else %}
+        <div class="responsive-table">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Domain</th>
+                        <th>Registered On</th>
+                        <th>Access</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in pending_users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.email_domain or 'Unknown' }}</td>
+                        <td>{{ user.created_at.strftime('%d %b, %Y at %H:%M') }}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('admin_approve_user') }}" id="approval_form_{{ user.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ form.csrf_token._value() }}" />
+                                <input type="hidden" name="user_id" value="{{ user.id }}" />
+                                <input type="hidden" name="action" value="approve" />
+                                <select name="video_access" class="form-control form-control-sm styled-select">
+                                    <option value="off" {% if user.email_domain != 'thbs.com' %}selected{% endif %}>EXTERNAL</option>
+                                    <option value="on" {% if user.email_domain == 'thbs.com' %}selected{% endif %}>INTERNAL</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <div class="action-buttons" style="display: flex; gap: 0.5rem;">
+                                <button type="submit" form="approval_form_{{ user.id }}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <form method="post" action="{{ url_for('admin_approve_user') }}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to reject this user? This will permanently delete their account.')">
+                                    <input type="hidden" name="csrf_token" value="{{ form.csrf_token._value() }}" />
+                                    <input type="hidden" name="user_id" value="{{ user.id }}" />
+                                    <input type="hidden" name="action" value="reject" />
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

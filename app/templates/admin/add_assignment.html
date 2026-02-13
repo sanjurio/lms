@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+.assignment-form-card {
+    background: var(--admin-card-bg);
+    border: 1px solid var(--admin-border);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.assignment-form-header {
+    background: #000000;
+    padding: 24px 28px;
+    color: white;
+}
+
+.assignment-form-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+}
+
+.assignment-form-header p {
+    margin: 8px 0 0;
+    opacity: 0.9;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.assignment-form-body {
+    padding: 28px;
+}
+
+.form-section {
+    margin-bottom: 28px;
+}
+
+.form-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--admin-border);
+    display: flex;
+    align-items: center;
+}
+
+.form-section-title i {
+    margin-right: 10px;
+}
+
+.setting-card {
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.setting-card label {
+    font-weight: 500;
+    color: var(--admin-text);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.setting-card .form-control {
+    background: var(--admin-card-bg);
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    color: var(--admin-text);
+    padding: 12px 16px;
+    font-size: 1rem;
+}
+
+.setting-card .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.setting-card .form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.setting-card textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.helper-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 768px) {
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.toggle-setting {
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.toggle-setting .toggle-label {
+    display: flex;
+    align-items: center;
+}
+
+.toggle-setting .toggle-label i {
+    margin-right: 12px;
+    color: var(--success-color);
+    font-size: 1.2rem;
+}
+
+.toggle-setting .toggle-label span {
+    font-weight: 500;
+    color: var(--admin-text);
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--admin-border);
+}
+
+.btn-create {
+    background: #000000;
+    border: 1px solid #333;
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-create:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    background: #222;
+    color: white;
+}
+
+.btn-cancel {
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 10px;
+    color: var(--admin-text);
+}
+
+.btn-cancel:hover {
+    background: var(--admin-border);
+    color: var(--admin-text);
+}
+
+.course-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-top: 10px;
+    color: white;
+}
+
+.course-badge i {
+    margin-right: 8px;
+}
+
+[data-bs-theme="light"] .assignment-form-header {
+    background: #000000 !important;
+}
+[data-bs-theme="light"] .btn-create {
+    background: #000000 !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}" class="active">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Teams</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Teams Requests</a></li>
+            <li><a href="{{ url_for('admin_mandatory_courses') }}">Mandatory Courses</a></li>
+        </ul>
+    </div>
+
+    <div class="admin-container" style="max-width: 700px; margin: 0 auto;">
+        <div class="assignment-form-card">
+            <div class="assignment-form-header">
+                <h2><i class="fas fa-clipboard-list me-2"></i>Create New Assignment</h2>
+                <p>Add a final assessment for your course</p>
+                <div class="course-badge">
+                    <i class="fas fa-book"></i>
+                    {{ course.title }}
+                </div>
+            </div>
+
+            <div class="assignment-form-body">
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-info-circle"></i>
+                            Basic Information
+                        </div>
+                        
+                        <div class="setting-card mb-3">
+                            <label for="title">Assignment Title</label>
+                            {{ form.title(class="form-control", placeholder="e.g., Final Course Assessment, Module Quiz") }}
+                            {% for error in form.title.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <div class="setting-card">
+                            <label for="description">Description <span class="text-muted">(optional)</span></label>
+                            {{ form.description(class="form-control", rows=3, placeholder="Describe the purpose and scope of this assessment...") }}
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-cog"></i>
+                            Assessment Settings
+                        </div>
+                        
+                        <div class="settings-grid">
+                            <div class="setting-card">
+                                <label for="passing_score">
+                                    <i class="fas fa-percentage text-success me-1"></i> Passing Score
+                                </label>
+                                {{ form.passing_score(class="form-control", min=0, max=100) }}
+                                <div class="helper-text">Minimum % to pass</div>
+                            </div>
+
+                            <div class="setting-card">
+                                <label for="time_limit_minutes">
+                                    <i class="fas fa-clock text-warning me-1"></i> Time Limit
+                                </label>
+                                {{ form.time_limit_minutes(class="form-control", min=0, placeholder="0") }}
+                                <div class="helper-text">Minutes (0 = unlimited)</div>
+                            </div>
+
+                            <div class="setting-card">
+                                <label for="max_attempts">
+                                    <i class="fas fa-redo text-info me-1"></i> Max Attempts
+                                </label>
+                                {{ form.max_attempts(class="form-control", min=0, placeholder="0") }}
+                                <div class="helper-text">0 = unlimited retries</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="toggle-setting">
+                            <div class="toggle-label">
+                                <i class="fas fa-toggle-on"></i>
+                                <span>Active (users can take this assignment)</span>
+                            </div>
+                            {{ form.is_active(class="form-check-input", style="width: 50px; height: 26px;") }}
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-create">
+                            <i class="fas fa-plus me-2"></i>Create Assignment
+                        </button>
+                        <a href="{{ url_for('admin_lessons', course_id=course.id) }}" class="btn btn-cancel">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

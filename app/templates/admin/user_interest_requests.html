@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+ 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+ 
+{% block content %}
+<div class="section">
+  <h1 class="section-title">User Teams Requests</h1>
+ 
+  <div class="admin-nav">
+    <ul>
+      <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+      <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+      <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+      <li><a href="{{ url_for('admin_courses') }}">Courses</a></li>
+      <li><a href="{{ url_for('admin_interests') }}">Teams</a></li>
+      <li><a href="{{ url_for('admin_user_interest_requests') }}" class="active">Teams Requests</a></li>
+      <li><a href="{{ url_for('admin_mandatory_courses') }}">Mandatory Courses</a></li>
+    </ul>
+  </div>
+ 
+  <div class="admin-container">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3>Pending Teams Requests</h3>
+        <span id="selectedCount" class="badge bg-secondary">0 selected</span>
+      </div>
+ 
+      <div class="card-body">
+        {% if not pending_requests %}
+          <div class="alert alert-info">
+            No pending Team requests at this time.
+          </div>
+        {% else %}
+ 
+        <!-- ONE FORM ONLY -->
+        <form method="post" id="actionForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" id="singleActionInput">
+ 
+          <!-- BULK ACTIONS -->
+          <div class="bulk-actions mb-3">
+            <button type="button" id="selectAll" class="btn btn-secondary btn-sm">
+              Select All
+            </button>
+ 
+            <button type="button" id="deselectAll" class="btn btn-secondary btn-sm">
+              Deselect All
+            </button>
+ 
+            <button type="submit"
+                    id="bulkApprove"
+                    name="bulk_action"
+                    value="approve"
+                    formaction="{{ url_for('admin_bulk_interest_requests') }}"
+                    class="btn btn-success btn-sm"
+                    disabled>
+              <i class="fas fa-check"></i> Approve Selected
+            </button>
+ 
+            <button type="submit"
+                    id="bulkReject"
+                    name="bulk_action"
+                    value="reject"
+                    formaction="{{ url_for('admin_bulk_interest_requests') }}"
+                    class="btn btn-danger btn-sm"
+                    disabled>
+              <i class="fas fa-times"></i> Reject Selected
+            </button>
+          </div>
+ 
+          <!-- TABLE -->
+          <div class="responsive-table">
+            <table class="user-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;">Select</th>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Teams</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+ 
+              <tbody>
+                {% for request in pending_requests %}
+                <tr>
+                  <td>
+                    <input type="checkbox"
+                           class="request-checkbox"
+                           name="selected_requests"
+                           value="{{ request.user.id }}_{{ request.interest.id }}">
+                  </td>
+ 
+                  <td>{{ request.user.username }}</td>
+                  <td>{{ request.user.email }}</td>
+                  <td>{{ request.interest.name }}</td>
+ 
+                  <td class="d-flex gap-2">
+                    <!-- SINGLE APPROVE -->
+                    <button type="submit"
+                            class="btn btn-success btn-sm"
+                            formaction="{{ url_for('admin_approve_interest_request') }}"
+                            onclick="prepareSingleAction('approve', {{ request.user.id }}, {{ request.interest.id }})">
+                      <i class="fas fa-check"></i> Approve
+                    </button>
+ 
+                    <!-- SINGLE REJECT -->
+                    <button type="submit"
+                            class="btn btn-danger btn-sm"
+                            formaction="{{ url_for('admin_approve_interest_request') }}"
+                            onclick="prepareSingleAction('reject', {{ request.user.id }}, {{ request.interest.id }})">
+                      <i class="fas fa-times"></i> Reject
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </form>
+ 
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+ 
+<script>
+const checkboxes = document.querySelectorAll('.request-checkbox');
+const bulkApprove = document.getElementById('bulkApprove');
+const bulkReject = document.getElementById('bulkReject');
+const selectedCount = document.getElementById('selectedCount');
+const form = document.getElementById('actionForm');
+ 
+function updateBulkState() {
+  const checked = document.querySelectorAll('.request-checkbox:checked').length;
+ 
+  selectedCount.textContent =
+    checked === 0 ? '0 selected'
+    : checked === 1 ? '1 selected'
+    : `${checked} selected`;
+ 
+  bulkApprove.disabled = checked === 0;
+  bulkReject.disabled = checked === 0;
+}
+ 
+checkboxes.forEach(cb => cb.addEventListener('change', updateBulkState));
+ 
+document.getElementById('selectAll').onclick = () => {
+  checkboxes.forEach(cb => cb.checked = true);
+  updateBulkState();
+};
+ 
+document.getElementById('deselectAll').onclick = () => {
+  checkboxes.forEach(cb => cb.checked = false);
+  updateBulkState();
+};
+ 
+function prepareSingleAction(action, userId, interestId) {
+  // cleanup old single-action fields
+  form.querySelectorAll('.single-hidden').forEach(e => e.remove());
+ 
+  document.getElementById('singleActionInput').value = action;
+ 
+  const u = document.createElement('input');
+  u.type = 'hidden';
+  u.name = 'user_id';
+  u.value = userId;
+  u.className = 'single-hidden';
+ 
+  const i = document.createElement('input');
+  i.type = 'hidden';
+  i.name = 'interest_id';
+  i.value = interestId;
+  i.className = 'single-hidden';
+ 
+  form.appendChild(u);
+  form.appendChild(i);
+}
+ 
+updateBulkState();
+</script>
+{% endblock %}

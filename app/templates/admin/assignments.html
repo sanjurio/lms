@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h1 class="section-title">All Assignments</h1>
+
+    <div class="admin-nav">
+        <ul>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin_pending_users') }}">Pending Users</a></li>
+            <li><a href="{{ url_for('admin_courses') }}">Courses</a></li>
+            <li><a href="{{ url_for('admin_interests') }}">Teams</a></li>
+            <li><a href="{{ url_for('admin_user_interest_requests') }}">Teams Requests</a></li>
+            <li><a href="{{ url_for('admin_mandatory_courses') }}">Mandatory Courses</a></li>
+            <li><a href="{{ url_for('admin_assignments') }}" class="active">Assignments</a></li>
+        </ul>
+    </div>
+
+    <div class="admin-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="admin-section-title">All Course Assignments</h2>
+        </div>
+        
+        {% if not assignments %}
+        <div class="alert alert-info">
+            <p>No assignments have been created yet. Go to a course's content page to add assignments.</p>
+        </div>
+        {% else %}
+        <div class="responsive-table">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Course</th>
+                        <th>Questions</th>
+                        <th>Passing Score</th>
+                        <th>Status</th>
+                        <th>Attempts</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignments %}
+                    <tr>
+                        <td>{{ assignment.title }}</td>
+                        <td>{{ assignment.course.title }}</td>
+                        <td>{{ assignment.questions.count() }}</td>
+                        <td>{{ assignment.passing_score }}%</td>
+                        <td>
+                            {% if assignment.is_active %}
+                            <span class="badge badge-success">Active</span>
+                            {% else %}
+                            <span class="badge badge-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ assignment.attempts.count() }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_edit_assignment', assignment_id=assignment.id) }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3"><i class="fas fa-file-alt me-2"></i>Document Analysis</h1>
+            <p class="text-muted">Upload a document (PDF, DOCX, or TXT) to analyze its content and generate insights.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-5 mb-4">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header bg-transparent border-secondary">
+                    <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Upload Document</h5>
+                </div>
+                <div class="card-body">
+                    <div class="upload-zone p-4 text-center rounded mb-3" style="border: 2px dashed rgba(255,255,255,0.2); background: rgba(255,255,255,0.03);">
+                        <i class="fas fa-file-circle-plus fa-3x mb-3" style="opacity: 0.5;"></i>
+                        <p class="mt-2 mb-2">Select your document file</p>
+                        <input type="file" class="form-control bg-dark text-light border-secondary" id="documentFile" accept=".pdf,.docx,.txt">
+                    </div>
+                    <small class="text-muted d-block mb-3">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Supported formats: PDF, DOCX, TXT (Max 10MB)
+                    </small>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-primary w-100" id="analyzeBtn" onclick="uploadDocument()">
+                        <i class="fas fa-bolt me-2"></i>Analyze Document
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7 mb-4">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header bg-transparent border-secondary">
+                    <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>How It Works</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                <i class="fas fa-cloud-upload-alt text-primary fa-lg"></i>
+                            </div>
+                            <h6>1. Upload</h6>
+                            <small class="text-muted">Select your document file</small>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="rounded-circle bg-info bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                <i class="fas fa-microchip text-info fa-lg"></i>
+                            </div>
+                            <h6>2. Analyze</h6>
+                            <small class="text-muted">AI extracts key information</small>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                <i class="fas fa-check-circle text-success fa-lg"></i>
+                            </div>
+                            <h6>3. Review</h6>
+                            <small class="text-muted">Get summary & Q&A</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingState" class="row mt-2" style="display: none;">
+        <div class="col-12">
+            <div class="card bg-dark border-info">
+                <div class="card-body text-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 class="text-info">Analyzing your document...</h5>
+                    <p class="text-muted mb-0">This may take a few moments depending on the file size.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorState" class="row mt-2" style="display: none;">
+        <div class="col-12">
+            <div class="alert alert-danger d-flex align-items-center" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <div id="errorMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="analysisResults" class="mt-2" style="display: none;">
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h3><i class="fas fa-chart-bar me-2"></i>Analysis Results</h3>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12 mb-4">
+                <div class="card bg-dark border-success">
+                    <div class="card-header bg-success bg-opacity-10 border-success">
+                        <h5 class="mb-0 text-success"><i class="fas fa-file-alt me-2"></i>Document Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="keyTakeaways" class="mb-3"></div>
+                        <div class="collapse" id="fullSummaryCollapse">
+                            <hr class="border-secondary">
+                            <h6 class="text-muted mb-2">Full Summary</h6>
+                            <p id="fullSummaryContent" class="text-light mb-0"></p>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#fullSummaryCollapse" aria-expanded="false">
+                            <i class="fas fa-chevron-down me-1"></i> Show Full Summary
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="card bg-dark border-primary">
+                    <div class="card-header bg-primary bg-opacity-10 border-primary">
+                        <h5 class="mb-0 text-primary"><i class="fas fa-question-circle me-2"></i>Questions & Answers</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="accordion accordion-flush" id="questionsAccordion"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.accordion-button {
+    background-color: rgba(255,255,255,0.03) !important;
+    color: #fff !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.accordion-button:not(.collapsed) {
+    background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+    color: var(--bs-primary) !important;
+}
+.accordion-button::after {
+    filter: invert(1);
+}
+.accordion-body {
+    background-color: rgba(0,0,0,0.2);
+    color: rgba(255,255,255,0.8);
+}
+.takeaway-item {
+    padding: 0.75rem 1rem;
+    background: rgba(var(--bs-success-rgb), 0.05);
+    border-left: 3px solid var(--bs-success);
+    margin-bottom: 0.5rem;
+    border-radius: 0 0.25rem 0.25rem 0;
+}
+.question-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+</style>
+
+<script>
+    function uploadDocument() {
+        const fileInput = document.getElementById('documentFile');
+        const file = fileInput.files[0];
+        const analyzeBtn = document.getElementById('analyzeBtn');
+
+        if (!file) {
+            showError('Please select a file first.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        analyzeBtn.disabled = true;
+        analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analyzing...';
+        
+        document.getElementById('analysisResults').style.display = 'none';
+        document.getElementById('errorState').style.display = 'none';
+        document.getElementById('loadingState').style.display = 'block';
+
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        fetch('/document-analysis', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Response data:', data);
+            document.getElementById('loadingState').style.display = 'none';
+            analyzeBtn.disabled = false;
+            analyzeBtn.innerHTML = '<i class="fas fa-bolt me-2"></i>Analyze Document';
+            
+            if (data.success) {
+                console.log('Calling displayResults with:', data);
+                displayResults(data);
+            } else if (data.error) {
+                showError(data.error);
+            } else {
+                showError(data.message || 'An error occurred while analyzing the document');
+            }
+        })
+        .catch(error => {
+            document.getElementById('loadingState').style.display = 'none';
+            analyzeBtn.disabled = false;
+            analyzeBtn.innerHTML = '<i class="fas fa-bolt me-2"></i>Analyze Document';
+            showError(error.message || 'An error occurred while analyzing the document');
+        });
+    }
+
+    function showError(message) {
+        document.getElementById('errorMessage').textContent = message;
+        document.getElementById('errorState').style.display = 'block';
+    }
+
+    function displayResults(data) {
+        console.log('displayResults called with:', JSON.stringify(data));
+        
+        const resultsDiv = document.getElementById('analysisResults');
+        resultsDiv.style.display = 'block';
+        
+        // Scroll to results
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        
+        // Handle summary
+        const summary = data.summary || 'No summary available';
+        const sentences = summary.split(/[.!?]+/).filter(s => s.trim().length > 10);
+        const keyTakeaways = document.getElementById('keyTakeaways');
+        keyTakeaways.innerHTML = '';
+        
+        if (sentences.length === 0) {
+            const div = document.createElement('div');
+            div.className = 'takeaway-item';
+            div.innerHTML = `<i class="fas fa-info-circle text-info me-2"></i>${summary}`;
+            keyTakeaways.appendChild(div);
+        } else {
+            const topSentences = sentences.slice(0, 4);
+            topSentences.forEach((sentence, index) => {
+                const div = document.createElement('div');
+                div.className = 'takeaway-item';
+                div.innerHTML = `<i class="fas fa-check text-success me-2"></i>${sentence.trim()}.`;
+                keyTakeaways.appendChild(div);
+            });
+        }
+
+        document.getElementById('fullSummaryContent').textContent = summary;
+
+        // Handle questions
+        const accordion = document.getElementById('questionsAccordion');
+        accordion.innerHTML = '';
+        
+        const questions = data.questions || [];
+        if (questions.length === 0) {
+            accordion.innerHTML = '<div class="p-3 text-muted">No questions generated from this document.</div>';
+        } else {
+            questions.forEach((qa, index) => {
+                const item = document.createElement('div');
+                item.className = 'accordion-item bg-transparent border-0';
+                item.innerHTML = `
+                    <h2 class="accordion-header" id="heading${index}">
+                        <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="collapse${index}">
+                            <span class="badge bg-primary question-badge me-2">Q${index + 1}</span>
+                            ${qa.question}
+                        </button>
+                    </h2>
+                    <div id="collapse${index}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" aria-labelledby="heading${index}" data-bs-parent="#questionsAccordion">
+                        <div class="accordion-body">
+                            <div class="d-flex align-items-start">
+                                <span class="badge bg-success question-badge me-2 mt-1">A</span>
+                                <p class="mb-0">${qa.answer}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                accordion.appendChild(item);
+            });
+        }
+        
+        console.log('displayResults completed');
+    }
+</script>
+{% endblock %}

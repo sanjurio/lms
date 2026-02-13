@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block styles %}
+
+<style>
+/* ======================
+   GRID
+   ====================== */
+
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ======================
+   CARD
+   ====================== */
+
+.course-card {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--bs-box-shadow-sm);
+}
+
+
+/* ======================
+   IMAGE
+   ====================== */
+
+.course-image-wrap {
+  height: 200px;
+  background: var(--bs-secondary-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.course-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.course-image.logo {
+  object-fit: contain;
+  padding: 12px;
+}
+
+/* ======================
+   BODY
+   ====================== */
+
+.course-card .card-body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.course-title {
+  font-size: 1.15rem;
+  margin: 0;
+  color: var(--bs-body-color);
+}
+
+.course-description {
+  font-size: 0.9rem;
+  color: var(--bs-secondary-color);
+}
+
+/* ======================
+   META
+   ====================== */
+
+.course-meta {
+  font-size: 0.85rem;
+  color: var(--bs-secondary-color);
+}
+
+/* ======================
+   BADGES (IMPORTANT FIX)
+   ====================== */
+
+.course-meta .badge,
+.course-card .badge {
+  color: var(--bs-body-color);
+}
+
+/* interest tags */
+.course-meta .badge {
+  background: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color);
+}
+
+/* ======================
+   PROGRESS
+   ====================== */
+
+.progress {
+  height: 8px;
+  background-color: var(--bs-secondary-bg);
+}
+
+/* ======================
+   BUTTON
+   ====================== */
+
+.course-card .btn {
+  margin-top: 12px;
+}
+
+.course-card {
+  height: auto;
+}
+/* ======================
+   COMPACT CARD TYPOGRAPHY
+   ====================== */
+
+/* tighten headings */
+.course-title {
+  margin-bottom: 4px !important;
+  line-height: 1.2;
+}
+
+/* tighten description */
+.course-description {
+  margin-bottom: 6px !important;
+  line-height: 1.35;
+}
+
+/* remove default paragraph spacing */
+.course-card p {
+  margin-bottom: 0.5rem;
+}
+
+/* tighten small text */
+.course-card small {
+  line-height: 1.2;
+}
+
+/* tighten progress section */
+.course-progress {
+  margin-bottom: 10px !important;
+}
+
+/* remove extra spacing from bootstrap utilities */
+.course-card .mb-2,
+.course-card .mb-3 {
+  margin-bottom: 0.5rem !important;
+}
+
+/* compact calendar row */
+.course-meta .mb-2 {
+  margin-bottom: 4px !important;
+}
+
+/* reduce icon vertical misalignment */
+.course-meta i {
+  vertical-align: middle;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<section class="hero-section" style="padding: 2rem 0; margin-bottom: 2rem;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="hero-title" style="font-size: 2rem;">Welcome {{ current_user.username }}!</h1>
+                <p class="hero-subtitle" style="font-size: 1.1rem; margin-bottom: 0;">Continue your Learning journey and expand your knowledge.</p>
+            </div>
+            
+        </div>
+    </div>
+</section>
+
+
+
+{# single site-wide placeholder #}
+{% set placeholder = url_for('static', filename='img/course-placeholder.svg') %}
+
+{% if not courses %}
+<!-- No Courses State -->
+<div class="container">
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <div class="feature-icon mb-4">
+                <i class="fas fa-book-reader"></i>
+            </div>
+            <h2 class="mb-3">No Courses Available Yet</h2>
+            <p class="mb-4">You don't have access to any courses at the moment. Please select your Teams and wait for admin approval.</p>
+            <a href="{{ url_for('user_interests') }}" class="btn btn-primary btn-lg">Select Your Teams</a>
+        </div>
+    </div>
+</div>
+{% else %}
+<!-- Your Courses Section -->
+<section class="section">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0">Your Courses</h2>
+        </div>
+
+        <div class="course-grid">
+            {% for course in courses %}
+            <div class="card course-card">
+                <div class="course-image-wrap">
+                    {# safe lowercasing and strip querystring if present #}
+                    {% set tmp_url = (course.cover_image_url or '') | lower %}
+                    {% if '?' in tmp_url %}
+                        {% set tmp_url = tmp_url[:tmp_url.find('?')] %}
+                    {% endif %}
+                    {% set is_logo = course.cover_image_url and (tmp_url.endswith('.svg') or tmp_url.endswith('.png') or tmp_url.endswith('.jpg') or tmp_url.endswith('.jpeg')) %}
+
+                    <img
+                        src="{{ course.cover_image_url or placeholder }}"
+                        alt="{{ (course.title ~ ' — course cover')|e }}"
+                        class="course-image {{ 'logo' if is_logo else '' }}"
+                        loading="lazy"
+                        decoding="async"
+                        onerror="(function(i,p){ if(i.src===p) return; i.onerror=null; i.src=p; })(this,'{{ placeholder }}');" />
+                </div>
+
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h3 class="course-title mb-0">{{ course.title }}</h3>
+                        {% if course.id in mandatory_course_ids %}
+                        <span class="badge bg-danger" style="font-size: 0.7rem;">
+                            <i class="fas fa-exclamation-circle me-1"></i>Mandatory
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p class="course-description">{{ course.description|truncate(100) }}</p>
+
+                    {% set cp = course_progress_list|selectattr('course_id', 'equalto', course.id)|first %}
+                    {% if cp and cp.total > 0 %}
+                    <div class="course-progress mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">Lessons</small>
+                            <small class="text-muted">{{ cp.completed }}/{{ cp.total }}</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar {% if cp.percentage == 100 %}bg-success{% else %}bg-primary{% endif %}" role="progressbar" style="width: {{ cp.percentage }}%;"></div>
+                        </div>
+                        
+                        {% if cp.assignment_required and cp.assignment_info %}
+                        <div class="assignment-status mt-2 p-2" style="background: rgba(255,255,255,0.05); border-radius: 6px;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-clipboard-check me-1"></i>{{ cp.assignment_info.title }}
+                                </small>
+                                {% if cp.assignment_passed %}
+                                <span class="badge bg-success" style="font-size: 0.7rem;">
+                                    <i class="fas fa-check me-1"></i>Passed
+                                </span>
+                                {% elif cp.assignment_info.best_score is not none %}
+                                <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">
+                                    <i class="fas fa-times me-1"></i>{{ cp.assignment_info.best_score }}%
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary" style="font-size: 0.7rem;">
+                                    <i class="fas fa-hourglass-half me-1"></i>Pending
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% if not cp.assignment_passed %}
+                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+                                Need {{ cp.assignment_info.passing_score }}% to pass
+                            </small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if cp.is_completed %}
+                        <div class="mt-2">
+                            <span class="badge bg-success"><i class="fas fa-trophy me-1"></i>Course Completed!</span>
+                        </div>
+                        {% elif cp.percentage == 100 and cp.assignment_required and not cp.assignment_passed %}
+                        <small class="text-warning d-block mt-1"><i class="fas fa-info-circle me-1"></i>Pass the assignment to complete</small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="course-meta mb-3">
+                        <div class="mb-2">
+                            <i class="fas fa-calendar-alt"></i> Updated: {{ course.updated_at.strftime('%d %b, %Y') }}
+                        </div>
+                        
+                    </div>
+
+                    <a href="{{ url_for('view_course', course_id=course.id) }}" class="btn btn-primary">
+                        {% if cp and cp.percentage == 100 %}
+                        <i class="fas fa-redo me-1"></i> Review Course
+                        {% elif cp and cp.percentage > 0 %}
+                        <i class="fas fa-play-circle me-1"></i> Continue Course
+                        {% else %}
+                        <i class="fas fa-play-circle me-1"></i> Start Course
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+
+<!-- JS: auto-classify very wide images as logos (works with cached images) -->
+<script>
+document.querySelectorAll('img.course-image').forEach(img => {
+  const markIfWide = () => {
+    try {
+      if (!img.classList.contains('logo') && img.naturalWidth && img.naturalHeight) {
+        if ((img.naturalWidth / img.naturalHeight) > 2.2) img.classList.add('logo');
+      }
+    } catch(e){}
+  };
+
+  if (img.complete) {
+    setTimeout(markIfWide, 0);
+  } else {
+    img.addEventListener('load', markIfWide, { once: true });
+    img.addEventListener('error', () => setTimeout(markIfWide, 0), { once: true });
+  }
+});
+</script>
+{% endblock %}
